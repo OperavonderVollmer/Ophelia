@@ -43,7 +43,7 @@ def get_package_details(setup_path: str) -> tuple[str, bool]:
 
 
 def create_virtual_environment():
-    print("Creating virtual environment...", end=" ")
+    print("Creating virtual environment...")
     if os.path.exists("venv"):
         print("\033[93mNOTICE:\033[0m venv already exists, skipping creation")
         return
@@ -58,7 +58,7 @@ def create_virtual_environment():
 NO_GIT_FLAG = False
 GIT_PATH = ""
 def has_git():
-    print("Checking for git...", end=" ")
+    print("Checking for git...")
     global NO_GIT_FLAG
     try:    
         subprocess.run(["git", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -81,7 +81,7 @@ def install_temp_git():
         portable_git_exe = os.path.join(temp_dir, "PortableGit.exe")
         url = "https://github.com/git-for-windows/git/releases/download/v2.51.1.windows.1/PortableGit-2.51.1-64-bit.7z.exe"
 
-        print("Downloading Portable Git...", end=" ")
+        print("Downloading Portable Git...")
         try:
             urllib.request.urlretrieve(url, portable_git_exe)
             print("\033[92mSUCCESS\033[0m")
@@ -115,7 +115,7 @@ def install_temp_git():
 
 def clean_temp_git(path):
     if path and os.path.exists(path):
-        print(f"Cleaning up PortableGit from {path}", end=" ")
+        print(f"Cleaning up PortableGit from {path}")
         try:
             shutil.rmtree(path, ignore_errors=True)
             print("\033[92mSUCCESS\033[0m")
@@ -128,7 +128,7 @@ def clean_temp_git(path):
 
 
 def install_requirements():
-    print("\n\nInstalling requirements...", end=" ")
+    print("\n\nInstalling requirements...")
     pip_path = os.path.join("venv", "Scripts", "pip.exe")    
     env = os.environ.copy()
     global GIT_PATH
