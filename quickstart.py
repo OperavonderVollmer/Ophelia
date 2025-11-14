@@ -11,35 +11,45 @@ import ast
 
 def get_package_details(setup_path: str) -> tuple[str, bool]:
     """
-    Returns:
-        (package_name, needs_git)
+    Returns (package_name, needs_git) where needs_git is True if any dependency
+    in install_requires or dependency_links uses a git URL.
     """
+    import ast
+
     with open(setup_path, "r", encoding="utf-8") as f:
         node = ast.parse(f.read(), filename=setup_path)
 
-    name = ""
+    name = "Unnamed Package"
     needs_git = False
 
+    class GitFinder(ast.NodeVisitor):
+        def visit_Constant(self, n: ast.Constant):
+            # works for Python 3.8+
+            if isinstance(n.value, str) and ("git+" in n.value or "@ git+" in n.value):
+                nonlocal needs_git
+                needs_git = True
+
+        def visit_Str(self, n: ast.Str):
+            # backwards compatibility
+            if "git+" in n.s or "@ git+" in n.s:
+                nonlocal needs_git
+                needs_git = True
+
+    git_finder = GitFinder()
+    git_finder.visit(node)
+
     for stmt in node.body:
-        # Find the setup() call
         if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
             func = stmt.value.func
-            if getattr(func, "id", "") == "setup":  # found setup()
+            if getattr(func, "id", "") == "setup":
                 for kw in stmt.value.keywords:
                     if kw.arg == "name":
-                        name = ast.literal_eval(kw.value)
-                    elif kw.arg in ("install_requires", "dependency_links"):
                         try:
-                            deps = ast.literal_eval(kw.value)
-                            # Handle both lists and tuples
-                            if isinstance(deps, (list, tuple)):
-                                for dep in deps:
-                                    if isinstance(dep, str) and dep.strip().startswith("git+"):
-                                        needs_git = True
-                                        break
+                            name = ast.literal_eval(kw.value)
                         except Exception:
-                            pass
-    return name or "Unnamed Package", needs_git
+                            name = "Unnamed Package"
+
+    return name, needs_git
 
 
 def create_virtual_environment():
@@ -174,7 +184,8 @@ def main():
 
     script_name, needs_git = get_package_details("setup.py")
     
-    print(f"\033[91mNOTICE:\033[0m This script will install the necessary files for \033[94m{script_name}\033[0m. This will create a virtual environment to contain these files and dependants, without modifying your system.\n\n")
+    
+    print(f"\033[91mNOTICE:\033[0m This script will install the necessary files for \033[94m{script_name}\033[0m. This will create a virtual environment to contain these files and dependants, without modifying your system.{' This script will also install git temporarily if absent.' if needs_git else ''}\n\n")
 
     success = False
 
