@@ -172,7 +172,7 @@ cd /d "%~dp0"
 
 title {script_name}
 
-start "" ".\venv\Scripts\pythonw.exe" ".\main.py"
+start "" ".\venv\Scripts\python.exe" ".\main.py"
 """
     path = f"start {script_name}.bat"
     with open(path, "w", encoding="utf-8", newline="\r\n") as f:

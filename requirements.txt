@@ -1,2 +1,9 @@
 git+https://github.com/OperavonderVollmer/OperaPowerRelay.git
+git+https://github.com/OperavonderVollmer/PluginTemplate.git
 dotenv
+websockets
+fastapi
+uvicorn
+
+
+

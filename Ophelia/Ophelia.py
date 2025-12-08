@@ -1,17 +1,24 @@
 from Ophelia import PluginManager
 from OperaPowerRelay import opr
+import os, sys
+root = os.path.dirname(os.path.abspath(__file__))
+if root not in sys.path:
+    sys.path.insert(0, root)
+import SocketServer
+import CallableAPI
 
-PM = PluginManager.PluginManager(verbose=True)
 
-plugins = PM.look_for_plugins("OperavonderVollmer")
-
+VERSION = 1
 
 def main():
-    main_loop()
-
-def main_loop():
     opr.print_from(name="Ophelia", message="Welcome to Ophelia!")
-    PM.on_start()    
+    PM = PluginManager.PluginManager(on_start=True)
+    CA = CallableAPI.CallableAPI(PluginManager=PM, host="127.0.0.1", port=6980, version=VERSION)
+    SS = SocketServer.SocketServer("127.0.0.1", 6990)
+
+    SS.start()
+    CA.start()
+       
     while True:
         try:
             opr.print_from(name="Ophelia", message="Enter to interact with Ophelia, Ctrl+C to exit.", return_count=1)
@@ -24,6 +31,8 @@ def main_loop():
             break
 
     PM.clean_up()
+    SS.stop()
+    CA.stop()
     opr.print_from(name="Ophelia", message="Goodbye!")
 
 

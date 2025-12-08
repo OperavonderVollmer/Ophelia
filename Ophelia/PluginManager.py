@@ -6,22 +6,23 @@ import tempfile, zipfile, shutil
 import subprocess
 import socket
 from datetime import datetime, timezone
+from PluginTemplate.PluginTemplate import ophelia_plugin
 
 
 class PluginManager():
-    def __init__(self, verbose=False, user=""):
+    def __init__(self, verbose=False, user="", on_start:bool=True):
         load_dotenv()
         self.env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
         if not os.path.exists(self.env_path):
             set_key(self.env_path, "GITHUB_USER", user or os.getenv("GITHUB_USER", "OperavonderVollmer"))
         self.verbose = verbose
         self.plugin_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-        self.plugins = {}
+        self.plugins: dict[str, ophelia_plugin] = {}
         self.user = user or os.getenv("GITHUB_USER", "OperavonderVollmer")
         self._past: dict = {
             "found_plugins_no": int(os.getenv("found_plugins_no", 0)),
         }
-
+        self.on_start() if on_start else None
         
     def backup(self):
         for key, value in self._past.items():
@@ -65,7 +66,7 @@ class PluginManager():
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
 
-            last_update_time = f"{f'{days}d ' if days > 0 else ''}{f'{hours}h ' if hours > 0 else ''}{f'{minutes}m ' if minutes > 0 else ''}ago"
+            last_update_time = f"{f'{days}d ' if days > 0 else ''}{f'{hours}h ' if hours > 0 else ''}{f'{minutes}m ago' if minutes > 0 else 'just now'}"
 
             installed_update_str = self._past.get(plugin['name'])
 
@@ -81,7 +82,8 @@ class PluginManager():
                 days, seconds = delta.days, delta.seconds
                 hours = seconds // 3600
                 minutes = (seconds % 3600) // 60
-                status = f"UPDATE AVAILABLE ({days}d {hours}h {minutes}m ago)"
+                
+                status = f"UPDATE AVAILABLE (Installed update was pushed {days}d {hours}h {minutes}m ago)"
             else:
                 status = "FULLY UPDATED"
 
@@ -121,71 +123,9 @@ class PluginManager():
 
         return plugins
 
-    # def download_plugin(self, plugin):
-    #     temp_dir = tempfile.mkdtemp()
-    #     output = os.path.join(temp_dir, f"{plugin['name']}.zip")
-    #     zip_url = f"https://api.github.com/repos/{self.user}/{plugin['name']}/zipball/main"
+    def get_input_scheme(self, PLUGIN_NAME): return self.plugins[PLUGIN_NAME].input_scheme()
 
-    #     try:
-    #         try:
-    #             response = requests.get(zip_url)
-    #             response.raise_for_status()
-
-    #             with open(output, "wb") as f:
-    #                 f.write(response.content)
-            
-    #             opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Downloaded plugin: {plugin['name']}")
-
-    #         except requests.exceptions.RequestException as e:
-    #             opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to download plugin: {plugin['name']}")
-    #             return False
-            
-    #         try:
-    #             with zipfile.ZipFile(output, "r") as zip_ref:
-    #                 zip_ref.extractall(temp_dir)
-
-    #             opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Extracted plugin: {plugin['name']}")
-    #         except zipfile.BadZipFile as e:
-    #             opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to extract plugin: {plugin['name']}")
-    #             return False
-    #         finally:
-    #             os.remove(output)
-
-
-    #         extracted_root = next(os.scandir(temp_dir)).path
-    #         inner_plugin = os.path.join(extracted_root, plugin['name'])
-    #         requirements_path = os.path.join(extracted_root, "requirements.txt")
-            
-
-    #         try:
-    #             dest_path = os.path.join(self.plugin_dir, plugin['name'])
-    #             if os.path.exists(dest_path):
-    #                 shutil.rmtree(dest_path)
-    #             shutil.move(inner_plugin, dest_path)
-    #             opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin: {plugin['name']}")
-    #         except Exception as e:
-    #             opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin: {plugin['name']}")
-    #             return False
-            
-    #         try:
-    #             if os.path.exists(requirements_path): # TODO: Remove comments
-    #                 # subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path])
-    #                 # subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path, "--force-reinstall"])
-    #                 opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin requirements: {plugin['name']}")
-    #         except Exception as e:
-    #             opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin requirements. Please install them manually: {plugin['name']}")
-    #             return False
-            
-    #         opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Finished installing {plugin['name']} to {self.plugin_dir}\\{plugin['name']}")
-
-    #         opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"New files added to {dest_path}: {', '.join(os.listdir(dest_path))}")          
-    #     except Exception as e:
-    #         opr.error_pretty(exc=e, name="Ophelia - PluginManager", message="Failed to download plugin.")
-    #     finally:
-    #         shutil.rmtree(temp_dir)
-    #         opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Cleaned up temp directory: {temp_dir}")
-
-    #     return True
+    def get_plugin_list(self): return self.plugins
 
     def download_plugin(self, plugin) -> bool:
         temp_dir = tempfile.mkdtemp()
@@ -299,13 +239,25 @@ class PluginManager():
         return plugins
 
 
-    def execute_plugin(self, plugin_name: str = None):
-        if not plugin_name:
-            opr.list_choices(choices=self.plugins.keys(), title="[Ophelia - Execute Plugin]", after_return_count=1)
-            input = opr.input_from(name="Ophelia - Execute Plugin", message=f"Select plugin [{1}/{len(self.plugins)}]")
-            plugin_name = list(self.plugins.keys())[int(input) - 1]
+    def execute_plugin(self, PLUGIN_NAME: str = None, payload: dict = None):
+        if not PLUGIN_NAME:
+            try:
+                while True:                
+                    opr.list_choices(choices=list(self.plugins.keys()), title="[Ophelia - Execute Plugin]", after_return_count=1)
+                    input = opr.input_from(name="Ophelia - Execute Plugin", message=f"Select plugin [{1}/{len(self.plugins)}]")
+                    PLUGIN_NAME = list(self.plugins.keys())[int(input) - 1] 
+                    break
+            except IndexError:
+                opr.print_from(name="Ophelia - Execute Plugin", message=f"[✖] Invalid input, try again")
+                pass
+            except (KeyboardInterrupt, ValueError, KeyError):
+                opr.print_from(name="Ophelia - Execute Plugin", message=f"[✖] Exiting plugin selection...")
+                return
+            except Exception as e:
+                opr.error_pretty(exc=e, name="Ophelia - Execute Plugin", message=f"Failed to select plugin: {e}")
+                return
 
-        self.plugins[plugin_name].execute()
+        self.plugins[PLUGIN_NAME].execute(payload) # type: ignore
 
     def clean_up(self):
         for plugin in self.plugins.values():
