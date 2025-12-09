@@ -123,9 +123,9 @@ class PluginManager():
 
         return plugins
 
-    def get_input_scheme(self, PLUGIN_NAME): return self.plugins[PLUGIN_NAME].input_scheme()
+    def get_input_scheme(self, PLUGIN_NAME): return self.plugins[PLUGIN_NAME].input_scheme(True)
 
-    def get_plugin_list(self): return self.plugins
+    def get_plugin_list(self): return list(self.plugins.keys())
 
     def download_plugin(self, plugin) -> bool:
         temp_dir = tempfile.mkdtemp()

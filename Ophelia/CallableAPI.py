@@ -1,5 +1,6 @@
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Body
+from OperaPowerRelay import opr
 import threading
 import os, sys
 root = os.path.dirname(os.path.abspath(__file__))
@@ -9,6 +10,7 @@ import PluginManager as PM
 
 class CallableAPI:
     
+
 
     def __init__(self, PluginManager, host="127.0.0.1", port=6980, version: int=1):
         self.host = host
@@ -20,32 +22,29 @@ class CallableAPI:
         self.fastapi_app = FastAPI()
 
         @self.fastapi_app.get("/")
-        def root(requestId: int = 1):
-            return self.message_scheme(requestId=requestId, type="REQUEST", action="", payload={"status": "success", "message": "Ophelia API is running."})
+        def root(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Ophelia API connected. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            return []
 
-        @self.fastapi_app.get("/REQUEST_PLUGINS")
-        def get_plugin_list(requestId: int = 1):
-            return self.message_scheme(requestId=requestId, type="REQUEST", action="REQUEST_PLUGINS", payload=self.PluginManager.get_plugin_list())
+        @self.fastapi_app.post("/REQUEST_PLUGINS")
+        def get_plugin_list(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting plugin list. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            return [self.PluginManager.get_plugin_list()]
 
-        @self.fastapi_app.post("/REQUEST_INPUT_SCHEME")   
-        def input_scheme(requestId: int = 1, PLUGIN_NAME: str = None):
-            return self.message_scheme(requestId=requestId, type="REQUEST", action="REQUEST_INPUT_SCHEME", payload=self.PluginManager.get_input_scheme(PLUGIN_NAME))
+        @self.fastapi_app.post("/REQUEST_INPUT_SCHEME")
+        def input_scheme(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting input scheme for {body.get("plugin", None)}. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            scheme = self.PluginManager.get_input_scheme(body.get("plugin", None))
+            print(f"Input scheme for {body.get('plugin', None)}: {scheme}")
+            return [scheme]
         
         @self.fastapi_app.post("/REQUEST_RESPONSE")
-        def execute_plugin(requestId: int = 1, PLUGIN_NAME: str = None, payload: dict = None):
-            return self.message_scheme(requestId=requestId, type="REQUEST", action="REQUEST_RESPONSE", payload=self.PluginManager.execute_plugin(PLUGIN_NAME, payload))     
-
-
-    def message_scheme(self, requestId: int, version: int = None, type: str = None, action: str = None, payload: dict = None):
-        return {
-            "version": version or self.version,
-            "type": type or "EVENT",
-            "action": action or "ERROR",
-            "requestId": requestId,
-            "payload": payload or {}
-        }
+        def execute_plugin(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Executing plugin {body.get("plugin", None)}. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            return [self.PluginManager.execute_plugin(body.get("plugin", None), body.get("payload", {}))]
 
     def start(self):
+        
         config = uvicorn.Config(self.fastapi_app, host=self.host, port=self.port, log_level="info")
         self.server = uvicorn.Server(config)
 

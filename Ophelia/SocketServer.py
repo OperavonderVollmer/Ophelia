@@ -20,7 +20,12 @@ class SocketServer:
         "type": "REQUEST" or "EVENT",
         "action": "REQUEST_PLUGINS", "REQUEST_INPUT_SCHEME", "REQUEST_RESPONSE"
         "requestId": "1234",
-        "payload": {}
+        "payload": {
+            "plugin": "plugin_name",
+            "status": "success"
+            "message": "message"
+            "data": {}
+        }
     }
 
 
@@ -56,18 +61,26 @@ class SocketServer:
             request = kwargs.get("type", "REQUEST")
             action = kwargs.get("action", "REQUEST_PLUGINS")
             payload = kwargs.get("payload", {})
-            plugin_name = kwargs.get("PLUGIN_NAME") or payload.get("PLUGIN_NAME")
+            plugin_name = kwargs.get("plugin") or payload.get("plugin")
             to_ship = {
-                "PLUGIN_NAME": plugin_name,
+                "requestId": kwargs.get("requestId"),
+                "plugin": plugin_name,
                 "payload": payload
             }
             if request == "EVENT":
                 opr.write_log(isFrom="Ophelia - SocketServer", message=f"EVENT: {action} - {payload}", level="INFO", filename="OpheliaServer.log")
+                opr.send_toast_notification(app_id="Ophelia Socket Server", title="Event", msg=f"Event: {action}", icon_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "Ophelia_Logo.png"))
+                return
             else:
+                print(f"Contacting API for {action} with {to_ship}")
                 response = requests.post(f"{self.api_url}/{action}", json=to_ship)
                 return response.json()
         except requests.exceptions.RequestException as e:
             opr.error_pretty(exc=e, name="Ophelia - SocketServer", message="Failed to contact API.")
+
+    async def sending(self, websocket, message):
+        opr.write_log(isFrom="Ophelia - SocketServer", message=f"Sending: {message}", level="INFO", filename="OpheliaServer.log", verbose=True)
+        await websocket.send(message)
 
     async def handler(self, websocket, path=None):
         opr.write_log(isFrom="Ophelia - SocketServer", message=f"New connection from {websocket.remote_address[0] or 'Unknown IP'}:{websocket.remote_address[1] or 'Unknown Port'}", level="INFO", filename="OpheliaServer.log")
@@ -85,29 +98,30 @@ class SocketServer:
                 })
                 if not self.verify_message(data):
                     response = {"status": "error", "message": "Invalid message."}
-                    await websocket.send(json.dumps(self.message_scheme(1, "RESPONSE", "ERROR", data.get("requestId"), response)))
+                    await websocket.send(json.dumps(self.message_scheme(1, "EVENT", "ERROR", data.get("requestId"), response)))
                     continue
                     
                 match data["action"]:
                     case "REQUEST_PLUGINS":
-                        plugin_list = ["Plugin 1", "Plugin 2", "Plugin 3"] # TODO: Get the list of plugins from the PluginManager
-                        response = {"status": "success", "message": "Plugins retrieved successfully.", "payload": plugin_list}
-                        await websocket.send(json.dumps(self.message_scheme(1, "RESPONSE", "REQUEST_PLUGINS", data.get("requestId"), response)))
-                    case "REQUEST_INPUT_SCHEME":
-                        
-                        input_scheme = await asyncio.to_thread(CallableAPI.get_input_scheme, data.get("PLUGIN_NAME"))
-                        response = {"status": "success", "message": "Input scheme retrieved successfully.", "payload": {
+                        plugin_list = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_PLUGINS", requestId=data.get("requestId"))
+                        response = {"status": "success", "message": "Plugins retrieved successfully.", "data": plugin_list}
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_PLUGINS", data.get("requestId"), response)))
+                    case "REQUEST_INPUT_SCHEME":                        
+                        input_scheme = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_INPUT_SCHEME", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"))
+                        print(input_scheme)
+                        response = {"status": "success", "message": "Input scheme retrieved successfully.", "data": {
+                            ""
                             "type": "INPUT_SCHEME",
-                            "data": input_scheme.serialize()
+                            "data": input_scheme
                         }}
-                        await websocket.send(json.dumps(self.message_scheme(1, "RESPONSE", "REQUEST_INPUT_SCHEME", data.get("requestId"), response)))
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_INPUT_SCHEME", data.get("requestId"), response)))
                     case "REQUEST_RESPONSE":
                         # result = await asyncio.to_thread(CallableAPI.execute, data.get("payload").get("plugin")) # Yet to be implemented - Sends the data to CallableAPI for processing
 
                         result = "This feature is under development."
 
-                        response = {"status": "success", "result": result}
-                        await websocket.send(json.dumps(response))
+                        response = {"status": "success", "message": result, "data": result}
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_RESPONSE", data.get("requestId"), response)))
                 
         except websockets.ConnectionClosed:
             pass
