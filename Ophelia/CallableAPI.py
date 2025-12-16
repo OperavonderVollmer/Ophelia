@@ -41,7 +41,9 @@ class CallableAPI:
         @self.fastapi_app.post("/REQUEST_RESPONSE")
         def execute_plugin(body: dict):
             opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Executing plugin {body.get("plugin", None)}. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
-            return [self.PluginManager.execute_plugin(body.get("plugin", None), body.get("payload", {}))]
+            scheme = self.PluginManager.execute_plugin(PLUGIN_NAME=body.get("plugin", None), payload=body.get("payload", {}))
+            print(f"Response for {body.get('plugin', None)}: {scheme}")
+            return [scheme]
 
     def start(self):
         

@@ -108,19 +108,20 @@ class SocketServer:
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_PLUGINS", data.get("requestId"), response)))
                     case "REQUEST_INPUT_SCHEME":                        
                         input_scheme = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_INPUT_SCHEME", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"))
-                        print(input_scheme)
                         response = {"status": "success", "message": "Input scheme retrieved successfully.", "data": {
-                            ""
                             "type": "INPUT_SCHEME",
                             "data": input_scheme
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_INPUT_SCHEME", data.get("requestId"), response)))
                     case "REQUEST_RESPONSE":
-                        # result = await asyncio.to_thread(CallableAPI.execute, data.get("payload").get("plugin")) # Yet to be implemented - Sends the data to CallableAPI for processing
 
-                        result = "This feature is under development."
+                        result = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_RESPONSE", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"), payload=data.get("payload").get("data"))
 
-                        response = {"status": "success", "message": result, "data": result}
+
+                        response = {"status": "success", "message": "Response sent successfully.", "data": {
+                            "type": "RESPONSE",
+                            "data": result
+                        }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_RESPONSE", data.get("requestId"), response)))
                 
         except websockets.ConnectionClosed:

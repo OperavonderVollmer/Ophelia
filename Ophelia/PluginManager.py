@@ -257,7 +257,7 @@ class PluginManager():
                 opr.error_pretty(exc=e, name="Ophelia - Execute Plugin", message=f"Failed to select plugin: {e}")
                 return
 
-        self.plugins[PLUGIN_NAME].execute(payload) # type: ignore
+        return self.plugins[PLUGIN_NAME].execute(**payload) if payload else self.plugins[PLUGIN_NAME].execute()   # type: ignore
 
     def clean_up(self):
         for plugin in self.plugins.values():
