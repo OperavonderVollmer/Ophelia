@@ -14,7 +14,6 @@ Ophelia serves as the central orchestration hub for a modular collection of Pyth
 
 Active early development (as of December 2025):
 - Backend relocation and initial plugin integration complete.
-- ScreenMonitor plugin added as proof-of-concept.
 - React Native UI ported from Ortlinde repository—basic scaffolding in place.
 
 Future milestones:
