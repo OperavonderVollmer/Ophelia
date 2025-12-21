@@ -22,18 +22,3 @@ Future milestones:
 - Enhanced UI for plugin configuration and real-time feedback.
 - Integration of existing tools (FileWhisperer, OPR-Speaks, WhisperTranslate, etc.).
 
-## Quick Start (Backend)
-
-```bash
-git clone https://github.com/OperavonderVollmer/Ophelia.git
-cd Ophelia/Backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies (once requirements.txt is finalized)
-pip install -r requirements.txt
-
-# Run core orchestrator (placeholder—implementation in progress)
-python main.py
