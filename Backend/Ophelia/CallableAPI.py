@@ -23,25 +23,25 @@ class CallableAPI:
 
         @self.fastapi_app.get("/")
         def root(body: dict):
-            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Ophelia API connected. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Ophelia API connected. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
             return []
 
         @self.fastapi_app.post("/REQUEST_PLUGINS")
         def get_plugin_list(body: dict):
-            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting plugin list. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting plugin list. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
             return [self.PluginManager.get_plugin_list()]
 
         @self.fastapi_app.post("/REQUEST_INPUT_SCHEME")
         def input_scheme(body: dict):
-            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting input scheme for {body.get("plugin", None)}. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Requesting input scheme for {body.get('plugin', None)}. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
             scheme = self.PluginManager.get_input_scheme(body.get("plugin", None))
             print(f"Input scheme for {body.get('plugin', None)}: {scheme}")
             return [scheme]
         
         @self.fastapi_app.post("/REQUEST_RESPONSE")
         def execute_plugin(body: dict):
-            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Executing plugin {body.get("plugin", None)}. Request ID: {body.get("requestId", 0)}", filename="OpheliaServer.log", level="INFO")
-            scheme = self.PluginManager.execute_plugin(PLUGIN_NAME=body.get("plugin", None), payload=body.get("payload", {}))
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Executing plugin {body.get('plugin', None)}. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
+            scheme = self.PluginManager.execute_plugin(PLUGIN_NAME=body.get('plugin', None), payload=body.get('payload', {}))
             print(f"Response for {body.get('plugin', None)}: {scheme}")
             return [scheme]
 
