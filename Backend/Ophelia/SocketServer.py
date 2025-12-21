@@ -114,7 +114,6 @@ class SocketServer:
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_INPUT_SCHEME", data.get("requestId"), response)))
                     case "REQUEST_RESPONSE":
-
                         result = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_RESPONSE", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"), payload=data.get("payload").get("data"))
 
 
@@ -123,7 +122,6 @@ class SocketServer:
                             "data": result
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_RESPONSE", data.get("requestId"), response)))
-                
         except websockets.ConnectionClosed:
             pass
 

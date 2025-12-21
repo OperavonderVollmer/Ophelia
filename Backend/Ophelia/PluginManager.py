@@ -83,7 +83,7 @@ class PluginManager():
                 hours = seconds // 3600
                 minutes = (seconds % 3600) // 60
                 
-                status = f"UPDATE AVAILABLE (Installed update was pushed {days}d {hours}h {minutes}m ago)"
+                status = f"UPDATE AVAILABLE (Installed update is outdated by {days}d {hours}h {minutes}m ago)"
             else:
                 status = "FULLY UPDATED"
 
