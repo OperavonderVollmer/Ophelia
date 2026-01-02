@@ -7,15 +7,6 @@ if root not in sys.path:
     sys.path.insert(0, root)
 from PluginTemplate import PluginTemplate
 
-test_message = {
-    "PLUGIN_NAME": "TestPlugin",
-    "COMMAND": "TestCommand",
-    "ARGS": {
-        "param1": "value1",
-        "param2": 42
-    }
-}
-
 class TestSocketClient:
     def __init__(self, uri):
         self.uri = uri
