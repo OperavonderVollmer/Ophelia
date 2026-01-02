@@ -1,12 +1,12 @@
 *.pyc
 /venv
 start Ophelia.bat
-/Ophelia/__pycache__
-/Ophelia/plugins
-Ophelia/.env
+Backend/.venv/
+Backend/Ophelia/__pycache__
+Backend/Ophelia/plugins
+Backend/Ophelia/.env
 *.pyc
-Ophelia/TestSocketClient.py
-Ophelia/__pycache__/PluginManager.cpython-313.pyc
+Backend/Ophelia/TestSocketClient.py
 /UI/.expo
 /UI/node_modules
 /Ophelia/__pycache__
