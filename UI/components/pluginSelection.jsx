@@ -38,11 +38,20 @@ const PluginSelection = () => {
   });
 
   const [plugins, setPlugins] = React.useState([]);
+  const [noPluginsMessage, setNoPluginsMessage] = React.useState(
+    "Check connection with host computer..."
+  );
 
   React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:UpdatePlugins", (payload) => {
       console.log(`Received plugins: ${JSON.stringify(payload)}`);
-      setPlugins(payload);
+      if (payload[0].length !== 0) {
+        setPlugins(payload);
+      } else {
+        setNoPluginsMessage(
+          "No plugins available. Please install plugins to proceed."
+        );
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -92,7 +101,7 @@ const PluginSelection = () => {
               color: "rgba(255, 255, 255, 1)",
             }}
           >
-            No plugins
+            {noPluginsMessage}
           </Text>
         )}
       </>

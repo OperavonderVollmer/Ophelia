@@ -51,7 +51,7 @@ const Home = () => {
         gap: 10,
         padding: 10,
       },
-      refreshButton: {
+      controlButton: {
         marginLeft: 10,
         backgroundColor: "rgba(0, 0, 0, 0.77)",
         padding: 5,
@@ -60,7 +60,7 @@ const Home = () => {
         borderWidth: 2,
         borderStyle: "solid",
       },
-      refreshButtonText: {
+      controlButtontext: {
         color: "rgba(255, 255, 255, 1)",
         fontSize: 10,
         display: "flex",
@@ -68,7 +68,7 @@ const Home = () => {
         alignItems: "center",
         justifyContent: "center",
       },
-      refreshButtonSVG: {
+      controlButtonSVG: {
         width: 20,
         height: 20,
         marginRight: 5,
@@ -104,7 +104,7 @@ const Home = () => {
           >
             <View
               style={[
-                styles.refreshButton,
+                styles.controlButton,
                 { flexDirection: "row", alignItems: "center" },
               ]}
             >
@@ -123,8 +123,30 @@ const Home = () => {
                 />
               </Svg>
 
-              <Text style={[styles.refreshButtonText, { marginLeft: 5 }]}>
+              <Text style={[styles.controlButtontext, { marginLeft: 5 }]}>
                 Refresh
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              Emitter.publish("OPR:Refresh");
+            }}
+          >
+            <View
+              style={[
+                styles.controlButton,
+                { flexDirection: "row", alignItems: "center" },
+              ]}
+            >
+              <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
+                <Path
+                  d="M10 3.5L13.0581 0.441881C12.4304 0.15802 11.7337 0 11 0C8.23858 0 6 2.23858 6 5C6 5.45802 6.06158 5.90165 6.17692 6.32308L0 12.5L3.5 16L9.67692 9.82308C10.0983 9.93842 10.542 10 11 10C13.7614 10 16 7.76142 16 5C16 4.26633 15.842 3.56956 15.5581 2.94188L12.5 6H10V3.5Z"
+                  fill="rgba(255, 255, 255, 0.8)" // adjust to taste
+                />
+              </Svg>
+              <Text style={[styles.controlButtontext, { marginLeft: 5 }]}>
+                Plugins
               </Text>
             </View>
           </TouchableOpacity>
