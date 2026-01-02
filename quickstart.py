@@ -150,7 +150,7 @@ def install_requirements():
         env["PATH"] = f"{git_cmd};{git_usr_bin};{git_mingw_bin};" + env["PATH"]
     try:
         subprocess.run(
-        [pip_path, "install", "-r", "requirements.txt"],
+        [pip_path, "install", "-r", '.\\Backend\\requirements.txt'],
         check=True,
         env=env,
         stdout=subprocess.DEVNULL,  # Optional: silence pip too
@@ -172,7 +172,7 @@ cd /d "%~dp0"
 
 title {script_name}
 
-start "" ".\venv\Scripts\python.exe" ".\main.py"
+start "" ".\venv\Scripts\python.exe" ".\Backend\main.py"
 """
     path = f"start {script_name}.bat"
     with open(path, "w", encoding="utf-8", newline="\r\n") as f:
@@ -182,7 +182,7 @@ start "" ".\venv\Scripts\python.exe" ".\main.py"
 
 def main():
 
-    script_name, needs_git = get_package_details("setup.py")
+    script_name, needs_git = get_package_details('./Backend/setup.py')
     
     
     print(f"\033[91mNOTICE:\033[0m This script will install the necessary files for \033[94m{script_name}\033[0m. This will create a virtual environment to contain these files and dependants, without modifying your system.{' This script will also install git temporarily if absent.' if needs_git else ''}\n\n")
