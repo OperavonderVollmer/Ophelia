@@ -11,27 +11,8 @@ import datetime
 import requests
 
 class SocketServer:
-    """
-    # WebSocket Server for remote communication with Ophelia.
 
-    To accommodate every plugin, the handler is expecting a dictionary with the following structure:
-    {
-        "version": 1,
-        "type": "REQUEST" or "EVENT",
-        "action": "REQUEST_PLUGINS", "REQUEST_INPUT_SCHEME", "REQUEST_RESPONSE"
-        "requestId": "1234",
-        "payload": {
-            "plugin": "plugin_name",
-            "status": "success"
-            "message": "message"
-            "data": {}
-        }
-    }
-
-
-    """
-
-    def __init__(self, host, port, api_url="http://127.0.0.1:6980"):
+    def __init__(self, host, port, api_url, run_local: bool = True):
         self.host = host
         self.port = port
         self.api_url = api_url
@@ -41,6 +22,7 @@ class SocketServer:
         self._server_event_loop = None
         self._stop_event = None
         self._fully_booted = False
+        self.run_local = run_local
         self.logs = []
 
     def verify_message(self, data):
@@ -129,13 +111,19 @@ class SocketServer:
         self._server_event_loop = asyncio.get_running_loop()
         self._stop_event = asyncio.Event()
 
-        self.server = await websockets.serve(self.handler, self.host, self.port)
+        remoteHost = await websockets.serve(self.handler, self.host, self.port)
+        if self.run_local:
+            localHost = await websockets.serve(self.handler, "127.0.0.1", self.port)
+
+        self.server = [remoteHost, localHost] if self.run_local else [remoteHost]
 
         self._running = True
         await self._stop_event.wait()
 
-        self.server.close()
-        await self.server.wait_closed()
+        for srv in self.server:
+            srv.close()
+            await srv.wait_closed()
+
         self._running = False
 
     def start(self):
@@ -177,38 +165,6 @@ class SocketServer:
 
 
         
-if __name__ == "__main__":
-    server = SocketServer("127.0.0.1", 6990)
-    server.start()
-
-    input("Press Enter to stop the server: ")
-    server.stop()
-
-
-
-
-
-
-#
-# 
-# 
-# 
-# OKAY. 
-# 12 06 2025
-# 
-# What we want to do is fix the bridge between the websocket server and the api server.
-# How do we do that? Fix contact_api
-# 
-# Scan the kwargs for the url/data needed then call the associated function via the api server.
-# 
-# 
-# 
-# 
-
-
-
-
-
 
 
 

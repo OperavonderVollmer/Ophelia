@@ -60,3 +60,5 @@ class CallableAPI:
             self.server.should_exit = True  
             self.thread.join()             # pyright: ignore[reportOptionalMemberAccess]
     
+    def api_url(self):
+        return f"http://{self.host}:{self.port}"

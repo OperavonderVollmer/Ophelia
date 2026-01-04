@@ -14,7 +14,7 @@ def main():
     opr.print_from(name="Ophelia", message="Welcome to Ophelia!")
     PM = PluginManager.PluginManager(on_start=True)
     CA = CallableAPI.CallableAPI(PluginManager=PM, host="127.0.0.1", port=6980, version=VERSION)
-    SS = SocketServer.SocketServer("127.0.0.1", 6990)
+    SS = SocketServer.SocketServer("127.0.0.1", 6990, api_url=CA.api_url())
 
     SS.start()
     CA.start()
