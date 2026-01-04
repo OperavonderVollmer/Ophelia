@@ -14,7 +14,7 @@ const MAX_DELAY = 30000;
 function connect() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
 
-  console.log("Connecting to backend...");
+  console.log(`Connecting to ${host}...`);
   ws = new WebSocket(host);
 
   ws.onopen = () => {
@@ -79,7 +79,7 @@ function send(message) {
 }
 
 /* -----------------------------
-   Message Builders (unchanged)
+   Message Builders 
 ----------------------------- */
 
 function generateRequestId() {
