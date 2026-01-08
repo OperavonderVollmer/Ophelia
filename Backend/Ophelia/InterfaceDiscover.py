@@ -6,42 +6,51 @@ import subprocess
 import sys
 import platform
 import tempfile
-import os
+import asyncio
 
-def get_interfaces():
-    interfaces = {}
-    for name, addrs in psutil.net_if_addrs().items():
-        ipv4_list = [addr.address for addr in addrs if addr.family.name == 'AF_INET']
-        if ipv4_list:
-            interfaces[name] = ipv4_list
-    return interfaces
 
-def generate_pairing_data(port=8080):
-    """Generate pairing data with interfaces"""
-    interfaces = get_interfaces()
+class InterfaceDiscover:
     
-    # Flatten to list of IPs
-    interface_list = []
-    for name, ips in interfaces.items():
-        for ip in ips:
-            if ip != '127.0.0.1':
-                interface_list.append({'name': name, 'ip': ip})
-    
-    interface_list.append({'name': 'localhost', 'ip': '127.0.0.1'})
-    
-    pairing_data = {
-        'interfaces': interface_list,
-        'port': port,
-        'token': secrets.token_urlsafe(32)
-    }
-    
-    return pairing_data
+    def __init__(self): pass
 
-def display_qr_in_new_terminal(pairing_data):
-    """Create a new terminal window with QR code"""
+    @staticmethod
+    def get_interfaces(flatten: bool = False, include_loopback: bool = True):
+        interfaces = {}
+        for name, address in psutil.net_if_addrs().items():
+            ipv4_list = [addr.address for addr in address if addr.family.name == 'AF_INET']
+            if ipv4_list:
+                interfaces[name] = ipv4_list
+
+        if not flatten:
+            return interfaces
+        else:
+            interface_list = []
+            for name, ips in interfaces.items():
+                for ip in ips:
+                    if ip != '127.0.0.1':
+                        interface_list.append({'name': name, 'ip': ip})
+
+            if include_loopback:
+                interface_list.append({'name': 'localhost', 'ip': '127.0.0.1'})
+
+            return interface_list 
     
-    # Create a Python script that will run in the new terminal
-    qr_script = f'''
+    @staticmethod
+    def generate_pairing_data(token, interfaces = None, port=8080, **kwargs):
+
+        if interfaces is None:
+            interfaces = InterfaceDiscover.get_interfaces(**kwargs)
+        
+        return  {
+            'interfaces': interfaces,
+            'port': port,
+            'token': token
+        }
+
+    @staticmethod
+    def display_qr_in_new_terminal(pairing_data):
+
+        qr_script = f'''
 import qrcode
 import json
 
@@ -65,58 +74,115 @@ print("="*40 + "\\n")
 qr.print_ascii(invert=True)
 
 print("\\n" + "="*40)
+index = 1
 for iface in {repr(pairing_data['interfaces'])}:
-    print(f"{{iface['name']}}: {{iface['ip']}}")
+    print(f"[{{index}}] {{iface['name']}}: {{iface['ip']}}")
+    index += 1
 print("="*40)
 
 input("\\nPress Enter to close...")
 '''
     
-    # Save script to temp file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(qr_script)
-        script_path = f.name
-    
-    # Get the Python executable from current environment
-    python_exe = sys.executable
-    
-    # Open new terminal based on OS
-    system = platform.system()
-    
-    if system == 'Windows':
-        # Use proper escaping for Windows
-        cmd = f'{python_exe} {script_path}'
-        subprocess.Popen(['cmd', '/c', 'start', 'cmd', '/k', cmd], shell=False)
-    elif system == 'Darwin':  # macOS
-        cmd = f'"{python_exe}" "{script_path}"'
-        subprocess.Popen(['osascript', '-e', f'tell app "Terminal" to do script {cmd}'])
-    elif system == 'Linux':
-        terminals = ['gnome-terminal', 'xterm', 'konsole', 'xfce4-terminal']
-        for term in terminals:
-            try:
-                if term == 'gnome-terminal':
-                    subprocess.Popen([term, '--', python_exe, script_path])
-                else:
-                    subprocess.Popen([term, '-e', f'{python_exe} {script_path}'])
-                break
-            except FileNotFoundError:
-                continue
-    
-    return script_path
 
-# Usage
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(qr_script)
+            script_path = f.name
+
+            python_exe = sys.executable
+    
+        system = platform.system()
+        
+        if system == 'Windows':
+            cmd = f'{python_exe} {script_path}'
+            subprocess.Popen(['cmd', '/c', 'start', 'cmd', '/k', cmd], shell=False)
+
+        elif system == 'Darwin': 
+            cmd = f'"{python_exe}" "{script_path}"'
+            subprocess.Popen(['osascript', '-e', f'tell app "Terminal" to do script {cmd}'])
+
+        elif system == 'Linux':
+            terminals = ['gnome-terminal', 'xterm', 'konsole', 'xfce4-terminal']
+            for term in terminals:
+                try:
+                    if term == 'gnome-terminal':
+                        subprocess.Popen([term, '--', python_exe, script_path])
+                    else:
+                        subprocess.Popen([term, '-e', f'{python_exe} {script_path}'])
+                    break
+                except FileNotFoundError:
+                    continue
+        
+        return script_path
+    
+    @staticmethod
+    def start_listening(token, pairing_data = None):
+        if pairing_data is None:
+            pairing_data = InterfaceDiscover.generate_pairing_data(token, flatten=True)
+
+        asyncio.run(InterfaceDiscover._listen_all(pairing_data))
+        
+    @staticmethod
+    async def _listen(iface, stop_event):
+        
+        try:
+            async def client_handler(reader, writer):
+                await InterfaceDiscover._handle_client(reader, writer, stop_event)
+            
+            server = await asyncio.start_server(
+                client_handler,  
+                iface['interface'], 
+                iface['port']
+            )
+        
+            async with server:
+                await stop_event.wait()
+                
+        except Exception as e:
+            print(f"Failed to start server on {iface['interface']}:{iface['port']} - {e}")
+
+    @staticmethod
+    async def _listen_all(pairing_data):
+        interfaces = pairing_data['interfaces']
+        port = pairing_data['port']
+
+        stop_event = asyncio.Event()
+
+
+        tasks = []
+        for iface in interfaces:
+            tasks.append(InterfaceDiscover._listen({'interface': iface['ip'], 'port': port}, stop_event))
+
+        await asyncio.gather(*tasks)
+
+    @staticmethod
+    async def _handle_client(reader, writer, stop_event):
+        addr = writer.get_extra_info('peername')
+        # log connection
+
+        data = await reader.read(1024)
+        message = data.decode()
+        # log message
+
+        writer.write(b'') #TODO: send response 
+        await writer.drain()
+
+        writer.close()
+        await writer.wait_closed()
+
+        # log disconnection
+        stop_event.set()
+
+
+
 if __name__ == "__main__":
-    print("Generating pairing QR code...")
-    
-    pairing_data = generate_pairing_data()
-    
-    # Display in new terminal
-    script_path = display_qr_in_new_terminal(pairing_data)
-    
-    print(f"\n✓ QR code displayed in new terminal")
-    print(f"Pairing token: {pairing_data['token'][:16]}...")
-    print("\nAvailable interfaces:")
-    for iface in pairing_data['interfaces']:
-        print(f"  • {iface['name']}: {iface['ip']}")
-    
-    print("\nWaiting for clients to connect...")
+    token = secrets.token_urlsafe(32)
+    pairing_data = InterfaceDiscover.generate_pairing_data(token, port=8080)
+    InterfaceDiscover.display_qr_in_new_terminal(pairing_data)
+
+
+
+# Need to implement server handling logic
+# Need to encrypt communication using the token
+# Need to decrypt communication using the token
+
+
