@@ -1,5 +1,4 @@
 import psutil
-import qrcode
 import json
 import secrets
 import subprocess
@@ -7,14 +6,35 @@ import sys
 import platform
 import tempfile
 import asyncio
-
+from OperaCryptography import OperaCryptography
+import threading
+import base64
 
 class InterfaceDiscover:
     
-    def __init__(self): pass
+    def __init__(self): 
+        self.one_time_token = None
+        self.states = ["IDLE","DISCOVERY", "PAIRING", "BOUND", "ERROR"]
+        self.state = self.states[0]
+        self.HybridCrypt = OperaCryptography.HybridCryptoEngine()
+        self.bound = False
 
-    @staticmethod
-    def get_interfaces(flatten: bool = False, include_loopback: bool = True):
+
+    def start(self):
+
+        self.one_time_token = secrets.token_urlsafe(32)
+        encrypted_token = self.HybridCrypt.encrypt(self.one_time_token.encode('utf-8'))
+        print(f"One-time token: {self.one_time_token} | Encrypted token: {encrypted_token}") # TODO: Remove printing sensitive info after testing
+        string_token = base64.urlsafe_b64encode(encrypted_token).decode("ascii")
+
+        pairing_data = self.generate_pairing_data(string_token, flatten=True)
+        
+        self.display_qr_in_new_terminal(pairing_data)
+
+        self._start_listening(pairing_data)
+ 
+
+    def get_interfaces(self, flatten: bool = False, include_loopback: bool = True):
         interfaces = {}
         for name, address in psutil.net_if_addrs().items():
             ipv4_list = [addr.address for addr in address if addr.family.name == 'AF_INET']
@@ -35,24 +55,26 @@ class InterfaceDiscover:
 
             return interface_list 
     
-    @staticmethod
-    def generate_pairing_data(token, interfaces = None, port=8080, **kwargs):
+    
+    def generate_pairing_data(self, encrypted_token, interfaces = None, port=8080, **kwargs):
 
         if interfaces is None:
-            interfaces = InterfaceDiscover.get_interfaces(**kwargs)
+            interfaces = self.get_interfaces(**kwargs)
         
         return  {
             'interfaces': interfaces,
             'port': port,
-            'token': token
+            'token': encrypted_token
         }
 
-    @staticmethod
-    def display_qr_in_new_terminal(pairing_data):
+    
+    def display_qr_in_new_terminal(self, pairing_data):
 
+# TODO: Remove printing sensitive info after testing
         qr_script = f'''
 import qrcode
 import json
+import sys
 
 data = {repr(json.dumps(pairing_data))}
 
@@ -80,9 +102,13 @@ for iface in {repr(pairing_data['interfaces'])}:
     index += 1
 print("="*40)
 
-input("\\nPress Enter to close...")
+print(f"Data: {{data}}")
+
+print("\\nYou may now close this window...")
+while True:
+    input("")
 '''
-    
+     
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
             f.write(qr_script)
@@ -114,19 +140,25 @@ input("\\nPress Enter to close...")
         
         return script_path
     
-    @staticmethod
-    def start_listening(token, pairing_data = None):
-        if pairing_data is None:
-            pairing_data = InterfaceDiscover.generate_pairing_data(token, flatten=True)
-
-        asyncio.run(InterfaceDiscover._listen_all(pairing_data))
+    
+    def _start_listening(self, pairing_data):
         
-    @staticmethod
-    async def _listen(iface, stop_event):
+
+        def _run_event_loop(pairing_data):
+            asyncio.run(self._listen_all(pairing_data))
+
+
+        thread = threading.Thread(target=_run_event_loop, args=(pairing_data,), daemon=True)
+        thread.start()
+
+        print("Listening for incoming connections...")
+        
+    
+    async def _listen(self, iface, stop_event):
         
         try:
             async def client_handler(reader, writer):
-                await InterfaceDiscover._handle_client(reader, writer, stop_event)
+                await self._handle_client(reader, writer, stop_event, self.found_device_callback)
             
             server = await asyncio.start_server(
                 client_handler,  
@@ -137,49 +169,74 @@ input("\\nPress Enter to close...")
             async with server:
                 await stop_event.wait()
                 
+        except OSError as e:
+            pass
         except Exception as e:
-            print(f"Failed to start server on {iface['interface']}:{iface['port']} - {e}")
-
-    @staticmethod
-    async def _listen_all(pairing_data):
+            print(f"Failed to start server on {iface['interface']} - {e}")
+    
+    async def _listen_all(self, pairing_data):
         interfaces = pairing_data['interfaces']
         port = pairing_data['port']
 
         stop_event = asyncio.Event()
 
-
         tasks = []
         for iface in interfaces:
-            tasks.append(InterfaceDiscover._listen({'interface': iface['ip'], 'port': port}, stop_event))
+            tasks.append(self._listen({'interface': iface['ip'], 'port': port}, stop_event))
 
         await asyncio.gather(*tasks)
 
-    @staticmethod
-    async def _handle_client(reader, writer, stop_event):
+    
+    async def _handle_client(self, reader, writer, stop_event, found_device_callback):
+        """
+
+        Intended Behavior: 
+        After connection, verify the token, and close all other listeners upon successful binding.
+        
+        """
         addr = writer.get_extra_info('peername')
-        # log connection
+        print(f"Connection from {addr}")
+        try:
+            data = await asyncio.wait_for(reader.read(1024), timeout=10)
+            
+            message = data.decode("ascii")
+            cipher_bytes = base64.urlsafe_b64decode(message)
+            decrypted = self.HybridCrypt.decrypt(cipher_bytes).decode("utf-8")
+        except Exception:
+            writer.write(b'FAILURE')
+            await writer.drain()
+            writer.close()
+            await writer.wait_closed()
+            return
 
-        data = await reader.read(1024)
-        message = data.decode()
-        # log message
 
-        writer.write(b'') #TODO: send response 
-        await writer.drain()
+
+        if not getattr(self, 'bound', False) and decrypted == self.one_time_token:
+            self.bound = True
+            writer.write(b'SUCCESS')
+            await writer.drain()
+            stop_event.set()  # shut down all listeners
+            found_device_callback(addr)
+        else:
+            writer.write(b'FAILURE')
+            await writer.drain()
 
         writer.close()
         await writer.wait_closed()
 
-        # log disconnection
-        stop_event.set()
-
+    def found_device_callback(self, device_info):
+        print(f"Device found: {device_info}!")
 
 
 if __name__ == "__main__":
-    token = secrets.token_urlsafe(32)
-    pairing_data = InterfaceDiscover.generate_pairing_data(token, port=8080)
-    InterfaceDiscover.display_qr_in_new_terminal(pairing_data)
+    discoverer = InterfaceDiscover()
+    discoverer.start()
 
+    while True:
+        input("Press enter to exit...")
+        break
 
+    print("Goodbye!")
 
 # Need to implement server handling logic
 # Need to encrypt communication using the token
