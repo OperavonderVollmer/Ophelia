@@ -18,10 +18,13 @@ class InterfaceDiscover:
         self.state = self.states[0]
         self.HybridCrypt = OperaCryptography.HybridCryptoEngine()
         self.bound = False
+        self.discovered_peer: tuple[str, int] = None # type: ignore
+        self._discovery_done = threading.Event()
 
 
     def start(self):
-
+        
+        self.state = self.states[1]
         self.one_time_token = secrets.token_urlsafe(32)
         encrypted_token = self.HybridCrypt.encrypt(self.one_time_token.encode('utf-8'))
         print(f"One-time token: {self.one_time_token} | Encrypted token: {encrypted_token}") # TODO: Remove printing sensitive info after testing
@@ -170,7 +173,7 @@ while True:
                 await stop_event.wait()
                 
         except OSError as e:
-            pass
+            pass 
         except Exception as e:
             print(f"Failed to start server on {iface['interface']} - {e}")
     
@@ -203,6 +206,7 @@ while True:
             cipher_bytes = base64.urlsafe_b64decode(message)
             decrypted = self.HybridCrypt.decrypt(cipher_bytes).decode("utf-8")
         except Exception:
+            self.state = self.states[4]
             writer.write(b'FAILURE')
             await writer.drain()
             writer.close()
@@ -215,17 +219,29 @@ while True:
             self.bound = True
             writer.write(b'SUCCESS')
             await writer.drain()
-            stop_event.set()  # shut down all listeners
+            stop_event.set()
+            self._discovery_done.set()
             found_device_callback(addr)
+            self.state = self.states[2]
         else:
             writer.write(b'FAILURE')
             await writer.drain()
+            self.state = self.states[4]
 
         writer.close()
         await writer.wait_closed()
 
     def found_device_callback(self, device_info):
-        print(f"Device found: {device_info}!")
+        self.state = self.states[3]
+        print(f"Discovered device: {device_info}")
+        self.discovered_peer = device_info
+
+    def wait_for_discovery(self, timeout=None) -> tuple:
+        completed = self._discovery_done.wait(timeout)
+        if not completed:
+            raise TimeoutError("Interface discovery timed out")
+        return self.discovered_peer # type: ignore
+
 
 
 if __name__ == "__main__":
