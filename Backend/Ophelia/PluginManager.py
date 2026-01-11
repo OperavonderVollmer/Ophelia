@@ -10,7 +10,7 @@ from PluginTemplate.PluginTemplate import ophelia_plugin
 
 
 class PluginManager():
-    def __init__(self, verbose=False, user="", on_start:bool=True):
+    def __init__(self, verbose=False, user="", on_start:bool=True, skip_update=False):
         load_dotenv()
         self.env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
         if not os.path.exists(self.env_path):
@@ -22,6 +22,7 @@ class PluginManager():
         self._past: dict = {
             "found_plugins_no": int(os.getenv("found_plugins_no", 0)),
         }
+        self.skip_update = skip_update  
         self.on_start() if on_start else None
         
     def backup(self):
@@ -95,6 +96,9 @@ class PluginManager():
         plugins = self.look_for_plugins(self.user)
         if self._past["found_plugins_no"] < len(plugins):
             opr.print_from(name="Ophelia - Update Plugins", message=f"[✔] Found {len(plugins) - self._past.get('found_plugins_no', 0)} new plugins!")
+
+        if self.skip_update:
+            return
 
         try:
             while True:
