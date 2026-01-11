@@ -21,6 +21,7 @@ function connect() {
     console.log("Connection opened");
     reconnectDelay = 1000;
     send(requestPlugins());
+    Emitter.setState("OPR:Online", [true]);
   };
 
   ws.onmessage = (event) => {
@@ -31,26 +32,28 @@ function connect() {
 
     switch (data.action) {
       case "REQUEST_PLUGINS":
-        Emitter.publishList("OPR:UpdatePlugins", data.payload.data);
+        Emitter.setState("OPR:UpdatePlugins", data.payload.data);
         break;
 
       case "REQUEST_INPUT_SCHEME":
-        Emitter.publishList("OPR:NewPopup", data.payload.data);
+        Emitter.setState("OPR:NewPopup", data.payload.data);
         break;
 
       case "REQUEST_RESPONSE":
-        Emitter.publishList("OPR:NewPopup", data.payload.data);
+        Emitter.setState("OPR:NewPopup", data.payload.data);
         break;
     }
   };
 
   ws.onclose = () => {
     console.log("Disconnected from backend");
+    Emitter.publish("OPR:Online", [false]);
     scheduleReconnect();
   };
 
   ws.onerror = (e) => {
     console.log("WebSocket error:", e.message || e);
+    Emitter.publish("OPR:Online", [false]);
     ws?.close();
   };
 }
