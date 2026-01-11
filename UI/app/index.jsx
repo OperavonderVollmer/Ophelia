@@ -31,6 +31,13 @@ const Home = () => {
   }, []);
 
   React.useEffect(() => {
+    const unsubscribe = Emitter.subscribe("OPR:Online", (status) => {
+      console.log("Index Server Status: ", status);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:NewPopup", handleNewPopup);
     return () => unsubscribe();
   }, [handleNewPopup]);

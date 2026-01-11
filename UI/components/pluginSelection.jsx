@@ -38,9 +38,7 @@ const PluginSelection = () => {
   });
 
   const [plugins, setPlugins] = React.useState([]);
-  const [noPluginsMessage, setNoPluginsMessage] = React.useState(
-    "Check connection with host computer..."
-  );
+  const [serverStatus, setServerStatus] = React.useState(false);
 
   React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:UpdatePlugins", (payload) => {
@@ -55,6 +53,19 @@ const PluginSelection = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  React.useEffect(() => {
+    const unsubscribe = Emitter.subscribe("OPR:Online", (status) => {
+      setServerStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const noPluginsMessage = React.useMemo(() => {
+    if (!serverStatus) {
+      return "";
+    }
+  });
 
   return (
     <ScrollView
