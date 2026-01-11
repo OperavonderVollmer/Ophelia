@@ -10,9 +10,57 @@ const TopBarComponent = ({ styles }) => {
     Dimensions.get("window").width < 600
   );
 
-  const [serverStatus, setServerStatus] = React.useState(
-    "Offline. Please Configure"
-  );
+  const [serverStatus, setServerStatus] = React.useState(false);
+
+  React.useEffect(() => {
+    const unsubscribe = Emitter.subscribe("OPR:Online", (status) => {
+      console.log("Status: ", status);
+      setServerStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const serverStatusText = React.useMemo(() => {
+    if (serverStatus) {
+      return "Online";
+    } else {
+      return "Offline, please configure";
+    }
+  }, [serverStatus]);
+
+  const serverStatusSVG = React.useMemo(() => {
+    if (serverStatus) {
+      return (
+        <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
+          <Path
+            d="M0 7L1.17157 5.82843C2.98259 4.01741 5.43884 3 8 3C10.5612 3 13.0174 4.01742 14.8284 5.82843L16 7L14.5858 8.41421L13.4142 7.24264C11.9783 5.8067 10.0307 5 8 5C5.96928 5 4.02173 5.8067 2.58579 7.24264L1.41421 8.41421L0 7Z"
+            fill="rgba(255, 255, 255, 0.8)"
+          />
+          <Path
+            d="M4.24264 11.2426L2.82843 9.82843L4 8.65685C5.06086 7.59599 6.49971 7 8 7C9.50029 7 10.9391 7.59599 12 8.65686L13.1716 9.82843L11.7574 11.2426L10.5858 10.0711C9.89999 9.38527 8.96986 9 8 9C7.03014 9 6.1 9.38527 5.41421 10.0711L4.24264 11.2426Z"
+            fill="rgba(255, 255, 255, 0.8)"
+          />
+          <Path
+            d="M8 15L5.65685 12.6569L6.82842 11.4853C7.13914 11.1746 7.56057 11 8 11C8.43942 11 8.86085 11.1746 9.17157 11.4853L10.3431 12.6569L8 15Z"
+            fill="rgba(255, 255, 255, 0.8)"
+          />
+        </Svg>
+      );
+    } else {
+      return (
+        <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
+          <Path
+            d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z"
+            fill="rgba(255, 255, 255, 0.8)"
+          />
+          <Path
+            d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z"
+            fill="rgba(255, 255, 255, 0.8)"
+          />
+        </Svg>
+      );
+    }
+  }, [serverStatus]);
 
   React.useEffect(() => {
     const onChange = ({ window }) => setIsPhone(window.width < 600);
@@ -96,19 +144,8 @@ const TopBarComponent = ({ styles }) => {
       />
       <ButtonWithIconComponent
         styles={styles}
-        icon={
-          <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
-            <Path
-              d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z"
-              fill="rgba(255, 255, 255, 0.8)"
-            />
-            <Path
-              d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z"
-              fill="rgba(255, 255, 255, 0.8)"
-            />
-          </Svg>
-        }
-        text={serverStatus}
+        icon={serverStatusSVG}
+        text={serverStatusText}
         onPress={() => {}}
       />
     </View>
