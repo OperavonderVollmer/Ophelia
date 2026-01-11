@@ -1,4 +1,3 @@
-from Ophelia import PluginManager
 from OperaPowerRelay import opr
 import os, sys
 root = os.path.dirname(os.path.abspath(__file__))
@@ -6,24 +5,30 @@ if root not in sys.path:
     sys.path.insert(0, root)
 import SocketServer
 import CallableAPI
+import PluginManager
 import InterfaceDiscover
 
 VERSION = 1
-
+interfaceDiscoverFlag = False
+streamline = True
 def main():
-
-    ID = InterfaceDiscover.InterfaceDiscover()
-    ID.start()
-
-    peer_ip, peer_port = ID.wait_for_discovery()
-    print("Discovered interface:", peer_ip)
-
+    
     opr.print_from(name="Ophelia", message="Welcome to Ophelia!")
-    PM = PluginManager.PluginManager(on_start=True)
-    CA = CallableAPI.CallableAPI(PluginManager=PM, host=peer_ip[0], port=6980, version=VERSION)
-    # CA = CallableAPI.CallableAPI(PluginManager=PM, host="127.0.0.1", port=6980, version=VERSION)
-    SS = SocketServer.SocketServer(peer_ip[0], 6990, api_url=CA.api_url())
-    # SS = SocketServer.SocketServer("127.0.0.1", 6990, api_url=CA.api_url())
+    PM = PluginManager.PluginManager(on_start=True, skip_update=streamline)
+
+    if interfaceDiscoverFlag:
+
+        ID = InterfaceDiscover.InterfaceDiscover()
+        ID.start()
+
+        peer_ip, peer_port = ID.wait_for_discovery()
+        print("Discovered interface:", peer_ip)
+        CA = CallableAPI.CallableAPI(PluginManager=PM, host=peer_ip[0], port=6980, version=VERSION)
+        SS = SocketServer.SocketServer(peer_ip[0], 6990, api_url=CA.api_url())
+
+    else:        
+        CA = CallableAPI.CallableAPI(PluginManager=PM, host="127.0.0.1", port=6980, version=VERSION)
+        SS = SocketServer.SocketServer("127.0.0.1", 6990, api_url=CA.api_url())
 
     SS.start()
     CA.start()

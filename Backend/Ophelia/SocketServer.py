@@ -112,10 +112,10 @@ class SocketServer:
         self._stop_event = asyncio.Event()
 
         remoteHost = await websockets.serve(self.handler, self.host, self.port)
-        if self.run_local:
+        if self.run_local and not self.host == "127.0.0.1":
             localHost = await websockets.serve(self.handler, "127.0.0.1", self.port)
 
-        self.server = [remoteHost, localHost] if self.run_local else [remoteHost]
+        self.server = [remoteHost, localHost] if self.run_local and not self.host == "127.0.0.1" else [remoteHost]
 
         self._running = True
         await self._stop_event.wait()
