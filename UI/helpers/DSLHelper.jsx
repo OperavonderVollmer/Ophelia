@@ -248,7 +248,12 @@ export function renderSection(header, data) {
   return (
     <View style={styles.section}>
       <Text
-        style={[styles.sectionHeader, styles.inputLabel, styles.whiteText, styles.poppinsLarge]}
+        style={[
+          styles.sectionHeader,
+          styles.inputLabel,
+          styles.poppinsLarge,
+          styles.whiteText,
+        ]}
       >
         {header}
       </Text>
@@ -257,6 +262,7 @@ export function renderSection(header, data) {
           styles.sectionText,
           styles.inputFieldDefaults,
           styles.poppinsSmall,
+          { color: "rgb(235, 235, 235)" },
         ]}
       >
         {data}
@@ -283,7 +289,9 @@ export function divHelper(node, classStyle, renderNode) {
 export function textBoxHelper(node, classStyle, setValueForId) {
   return (
     <View key={node.id} style={{}}>
-      {node.label ? <Text style={[styles.inputLabel,styles.whiteText]}>{node.label}</Text> : null}
+      {node.label ? (
+        <Text style={[styles.inputLabel, styles.whiteText]}>{node.label}</Text>
+      ) : null}
 
       <View style={styles.inputFieldDefaults}>
         <TextInput
@@ -306,7 +314,9 @@ export function selectHelper(node, classStyle, setValueForId) {
   return (
     <View key={node.id} style={{ marginBottom: 10 }}>
       {node.props?.label ? (
-        <Text style={[styles.inputLabel, styles.whiteText]}>{node.props.label}</Text>
+        <Text style={[styles.inputLabel, styles.whiteText]}>
+          {node.props.label}
+        </Text>
       ) : null}
       <View style={styles.inputFieldDefaults}>
         <Picker
@@ -343,7 +353,8 @@ export function h1Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h1Default,
             styles.italic,
             styles.headerDefault,
@@ -363,7 +374,8 @@ export function h2Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h2Default,
             styles.italic,
             styles.headerDefault,
@@ -383,7 +395,8 @@ export function h3Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h3Default,
             styles.italic,
             styles.headerDefault,
@@ -403,7 +416,8 @@ export function h4Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h4Default,
             styles.italic,
             styles.headerDefault,
@@ -423,7 +437,8 @@ export function h5Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h5Default,
             styles.italic,
             styles.headerDefault,
@@ -443,7 +458,8 @@ export function h6Helper(node, classStyle) {
       {node.props?.text ? (
         <Text
           style={[
-            styles.inputLabel, styles.whiteText,
+            styles.inputLabel,
+            styles.whiteText,
             styles.h6Default,
             styles.italic,
             styles.headerDefault,
