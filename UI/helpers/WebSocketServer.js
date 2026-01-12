@@ -32,15 +32,15 @@ function connect() {
 
     switch (data.action) {
       case "REQUEST_PLUGINS":
-        Emitter.setState("OPR:UpdatePlugins", data.payload.data);
+        Emitter.setStateList("OPR:UpdatePlugins", data.payload.data);
         break;
 
       case "REQUEST_INPUT_SCHEME":
-        Emitter.setState("OPR:NewPopup", data.payload.data);
+        Emitter.setStateList("OPR:NewPopup", data.payload.data);
         break;
 
       case "REQUEST_RESPONSE":
-        Emitter.setState("OPR:NewPopup", data.payload.data);
+        Emitter.setStateList("OPR:NewPopup", data.payload.data);
         break;
     }
   };

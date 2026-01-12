@@ -28,10 +28,23 @@ class _Emitter {
     this.publish(event, value);
   }
 
-  publish(event, value) {
+  setStateList(event, value) {
+    this.states[event] = value;
+    this.publishList(event, value);
+  }
+
+  publish(event, args = []) {
     const res = [];
     (this.eventMap[event] ?? []).forEach((callback) => {
-      res.push(callback(value));
+      res.push(callback(...args));
+    });
+    return res;
+  }
+
+  publishList(event, args = []) {
+    const res = [];
+    (this.eventMap[event] ?? []).forEach((callback) => {
+      res.push(callback(args));
     });
     return res;
   }
