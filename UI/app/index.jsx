@@ -13,6 +13,7 @@ import {
   Poppins_500Medium,
   Poppins_600SemiBold,
 } from "@expo-google-fonts/poppins";
+import { styles } from "./styles";
 
 const Home = () => {
   const [fontsLoaded] = useFonts({
@@ -43,45 +44,18 @@ const Home = () => {
   }, [handleNewPopup]);
 
   React.useEffect(() => {
+    const unsubscribe = Emitter.subscribe("OPR:NewMenu", (payload) => {
+      setPopup(payload);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:CloseForm", () => {
       setPopup(null);
     });
     return () => unsubscribe();
   }, []);
-
-  const [styles, setStyles] = React.useState(
-    StyleSheet.create({
-      container: {
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        padding: 10,
-      },
-      controlButton: {
-        marginLeft: 10,
-        backgroundColor: "rgba(0, 0, 0, 0.77)",
-        padding: 5,
-        borderRadius: 5,
-        borderColor: "rgba(255, 255, 255, 0.8)",
-        borderWidth: 2,
-        borderStyle: "solid",
-      },
-      controlButtontext: {
-        color: "rgba(255, 255, 255, 1)",
-        fontSize: 10,
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-      },
-      controlButtonSVG: {
-        width: 20,
-        height: 20,
-        marginRight: 5,
-      },
-    })
-  );
 
   return (
     <React.Fragment>
