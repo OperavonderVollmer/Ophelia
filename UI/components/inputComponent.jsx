@@ -29,7 +29,7 @@ const InputComponent = ({ payload }) => {
           borderRadius: 10,
           borderWidth: 3,
           borderColor: "rgba(206, 206, 206, 0.78)",
-          width: Math.max(window.width * 0.5, 300),
+          width: Math.max(window.width * 0.5, 400),
           height: Math.max(window.height * 0.8, 400),
         },
       }),
