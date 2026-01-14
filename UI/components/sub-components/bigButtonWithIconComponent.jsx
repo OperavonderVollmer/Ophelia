@@ -10,6 +10,8 @@ const bigButtonWithIconComponent = ({
   onPress,
   index,
   selectedMenu,
+  height = 80,
+  width = 80,
 }) => {
   const [selected, setSelected] = React.useState(false);
   return (
@@ -34,7 +36,7 @@ const bigButtonWithIconComponent = ({
       <TouchableOpacity
         style={{
           backgroundColor: "rgb(5, 5, 5)",
-          width: selectedMenu === index ? 320 : 160,
+          width: selectedMenu === index ? 330 : 160,
           height: 160,
           borderRadius: 10,
           justifyContent: "center",
@@ -45,8 +47,8 @@ const bigButtonWithIconComponent = ({
         }}
       >
         <Svg
-          width={80}
-          height={80}
+          width={width}
+          height={height}
           viewBox="0 0 24 24"
           fill="none"
           stroke={
