@@ -1,6 +1,12 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+} from "react-native";
+import Svg, { Path, Circle } from "react-native-svg";
 import InputComponent from "./inputComponent";
 import { styles } from "../app/styles";
 import { StyleSheet } from "react-native";
@@ -79,29 +85,152 @@ const InterfaceDiscoveryComponent = () => {
         d="M17.8851 8.29353C17.8851 9.50601 16.8982 10.4889 15.6807 10.4889C14.4633 10.4889 13.4763 9.50601 13.4763 8.29353C13.4763 7.08105 14.4633 6.09814 15.6807 6.09814C16.8982 6.09814 17.8851 7.08105 17.8851 8.29353Z"
       />
     </>,
+    <>
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 21H9C6.17157 21 4.75736 21 3.87868 20.1213C3 19.2426 3 17.8284 3 15M21 15C21 17.8284 21 19.2426 20.1213 20.1213C19.8215 20.4211 19.4594 20.6186 19 20.7487"
+      />
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 16V3M12 3L16 7.375M12 3L8 7.375"
+      />
+    </>,
+    <>
+      <Circle cx="12" cy="12" r="3" />
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2 13.3636C2 10.2994 2 8.76721 2.74902 7.6666C3.07328 7.19014 3.48995 6.78104 3.97524 6.46268C4.69555 5.99013 5.59733 5.82123 6.978 5.76086C7.63685 5.76086 8.20412 5.27068 8.33333 4.63636C8.52715 3.68489 9.37805 3 10.3663 3H13.6337C14.6219 3 15.4728 3.68489 15.6667 4.63636C15.7959 5.27068 16.3631 5.76086 17.022 5.76086C18.4027 5.82123 19.3044 5.99013 20.0248 6.46268C20.51 6.78104 20.9267 7.19014 21.251 7.6666C22 8.76721 22 10.2994 22 13.3636C22 16.4279 22 17.9601 21.251 19.0607C20.9267 19.5371 20.51 19.9462 20.0248 20.2646C18.9038 21 17.3433 21 14.2222 21H9.77778C6.65675 21 5.09624 21 3.97524 20.2646C3.48995 19.9462 3.07328 19.5371 2.74902 19.0607C2.53746 18.7498 2.38566 18.4045 2.27673 18"
+      />
+      <Path strokeLinecap="round" strokeLinejoin="round" d="M19 10H18" />
+    </>,
   ]);
   const [connected, setConnected] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState(0); // 0 = none, 1 = Connect via localhost, 2 = Connect via QR code, 3 = Direct input of token and address
 
   const subMenuContent = React.useMemo(() => {
+    let instruction = "";
+    let content = <></>;
+    console.log("selectedMenu", selectedMenu);
     switch (selectedMenu) {
       case 0:
         return null;
       case 1:
-        return (
-          <View>
-            <Text style={{ color: "white", fontSize: 20 }}>Instructions</Text>
-            <Text style={{ color: "white", marginLeft: 10 }}>Instructions</Text>
-          </View>
+        instruction =
+          "Automatically attempt to locate and connect with a locally running instance of Ophelia present on this machine";
+        content = (
+          <>
+            <Text style={{ color: "white", fontSize: 15 }}>
+              {connected
+                ? "Currently connected to Ophelia. You may now close this window."
+                : "Not currently connected. Please use the other options to connect or make sure Ophelia is running properly on this machine."}
+            </Text>
+          </>
         );
+        break;
       case 2:
-        return <Text style={{ color: "white" }}>Second</Text>;
+        instruction =
+          "Connects to Ophelia using the QR code provided by Ophelia";
+        content = (
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <BigButtonWithIconComponent
+                text="Upload QR Code"
+                onPress={() => {}}
+                icon={icons[3]}
+                index={99}
+              />
+              <BigButtonWithIconComponent
+                text="Use Camera"
+                onPress={() => {}}
+                icon={icons[4]}
+                index={99}
+              />
+            </View>
+          </>
+        );
+        break;
       case 3:
-        return <Text style={{ color: "white" }}>Third</Text>;
-      default:
-        return null;
+        instruction =
+          "Connect to Ophelia by directly inputting the token and address provided by Ophelia";
+        content = (
+          <>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <View
+                style={{
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                }}
+              >
+                <Text
+                  style={{ color: "white", fontSize: 15, marginBottom: 10 }}
+                >
+                  Token:
+                </Text>
+                <Text style={{ color: "white", fontSize: 15 }}>Address:</Text>
+              </View>
+
+              <View style={{ flex: 1, justifyContent: "space-between" }}>
+                <TextInput
+                  placeholder="Enter token"
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 5,
+                    marginBottom: 10,
+                  }}
+                />
+                <TextInput
+                  placeholder="Enter address"
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 5,
+                  }}
+                />
+              </View>
+            </View>
+          </>
+        );
+        break;
     }
-  }, [selectedMenu]);
+    return (
+      <View
+        style={{
+          padding: 10,
+          borderRadius: 10,
+          justifyContent: "flex-start",
+          alignSelf: "stretch",
+        }}
+      >
+        <Text style={{ color: "white", fontSize: 30, marginBottom: 10 }}>
+          Instructions
+        </Text>
+        <Text
+          style={{
+            color: "white",
+            fontSize: 15,
+            marginLeft: 15,
+            marginBottom: 60,
+          }}
+        >
+          {instruction}
+        </Text>
+        {content}
+      </View>
+    );
+  }, [selectedMenu, connected]);
 
   return (
     <ScrollView
@@ -165,6 +294,7 @@ const InterfaceDiscoveryComponent = () => {
           justifyContent: selectedMenu === 0 ? "center" : "flex-start",
           alignItems: "center",
           minHeight: selectedMenu === 0 ? "100%" : undefined,
+          marginTop: selectedMenu === 0 ? 0 : 20,
         }}
       >
         <View
@@ -206,17 +336,6 @@ const InterfaceDiscoveryComponent = () => {
             selectedMenu={selectedMenu}
           />
         </View>
-      </View>
-      <View
-        style={{
-          display: selectedMenu !== 0 ? "flex" : "none",
-          margin: 10,
-          padding: 10,
-          borderRadius: 10,
-          borderWidth: 2,
-          borderColor: "white",
-        }}
-      >
         <LinearGradient
           colors={
             connected
@@ -224,24 +343,32 @@ const InterfaceDiscoveryComponent = () => {
               : ["rgba(199, 136, 20, 0.7)", "rgba(230, 31, 31, 0.7)"]
           }
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 1, y: 0 }}
           style={{
             flexDirection: "row",
-            justifyContent: "space-between",
+            // justifyContent: "space-between",
             justifyContent: "center",
             alignItems: "center",
             borderRadius: 10,
             // borderWidth: 0.05,
             borderColor: "white",
-            marginVertical: 10,
+            marginTop: 30,
             marginHorizontal: 40,
-            padding: 5,
+            padding: 10,
+            width: "90%",
           }}
         >
           <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
             {connected ? "Connected" : "Disconnected"}
           </Text>
         </LinearGradient>
+      </View>
+      <View
+        style={{
+          display: selectedMenu !== 0 ? "flex" : "none",
+          padding: 10,
+        }}
+      >
         {subMenuContent}
       </View>
     </ScrollView>
