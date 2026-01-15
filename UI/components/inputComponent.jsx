@@ -17,7 +17,7 @@ const InputComponent = ({ payload }) => {
       StyleSheet.create({
         outer: {
           position: "absolute",
-          backgroundColor: "rgb(0, 0, 0)",
+          backgroundColor: "rgba(0, 0, 0, 0.62)",
           zIndex: 999,
           justifyContent: "center",
           alignItems: "center",
@@ -29,7 +29,7 @@ const InputComponent = ({ payload }) => {
           borderRadius: 10,
           borderWidth: 3,
           borderColor: "rgba(206, 206, 206, 0.78)",
-          width: Math.max(window.width * 0.5, 400),
+          width: Math.max(window.width * 0.5, 300),
           height: Math.max(window.height * 0.8, 400),
         },
       }),
@@ -39,7 +39,7 @@ const InputComponent = ({ payload }) => {
   return (
     <View style={styles.outer}>
       <LinearGradient
-        colors={["rgba(18, 7, 39, .7)", "rgba(27, 2, 2, .7)"]}
+        colors={["rgb(18, 7, 39)", "rgb(27, 2, 2)"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.inner}

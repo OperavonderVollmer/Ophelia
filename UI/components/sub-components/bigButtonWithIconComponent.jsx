@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, Dimensions } from "react-native";
 import { styles, gradientColors } from "../../app/styles";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -14,6 +14,15 @@ const bigButtonWithIconComponent = ({
   width = 80,
 }) => {
   const [selected, setSelected] = React.useState(false);
+  const [window, setWindow] = React.useState(Dimensions.get("window"));
+
+  React.useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", () => {
+      setWindow(Dimensions.get("window"));
+    });
+    return () => subscription?.remove();
+  }, []);
+
   return (
     <LinearGradient
       colors={
@@ -36,7 +45,8 @@ const bigButtonWithIconComponent = ({
       <TouchableOpacity
         style={{
           backgroundColor: "rgb(5, 5, 5)",
-          width: selectedMenu === index ? 330 : 160,
+          width:
+            selectedMenu === index ? (window.width < 750 ? 220 : 330) : 160,
           height: 160,
           borderRadius: 10,
           justifyContent: "center",
