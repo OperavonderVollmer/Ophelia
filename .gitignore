@@ -12,3 +12,4 @@ Backend/Ophelia/TestSocketClient.py
 /Ophelia/__pycache__
 /Backend/venv
 *.code-workspace
+/UI/android
