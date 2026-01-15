@@ -6,13 +6,12 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import Svg, { Path, Circle } from "react-native-svg";
-import InputComponent from "./inputComponent";
-import { styles } from "../app/styles";
-import { StyleSheet } from "react-native";
+import { Path, Circle } from "react-native-svg";
 import BigButtonWithIconComponent from "./sub-components/bigButtonWithIconComponent";
 import Emitter from "../helpers/Emitter";
 import { LinearGradient } from "expo-linear-gradient";
+import { InterfaceDiscoverySubComponent } from "./sub-components/interfaceDiscoverySubComponent";
+import { launchImageLibraryAsync } from "expo-image-picker";
 
 const InterfaceDiscoveryComponent = () => {
   const [icons, setIcons] = React.useState([
@@ -110,10 +109,51 @@ const InterfaceDiscoveryComponent = () => {
   const [connected, setConnected] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState(0); // 0 = none, 1 = Connect via localhost, 2 = Connect via QR code, 3 = Direct input of token and address
 
-  const subMenuContent = React.useMemo(() => {
+  const [token, setToken] = React.useState("");
+  const [address, setAddress] = React.useState("");
+
+  function _connect() {
+    console.log("TODO");
+  }
+
+  function readQRCode(base64) {
+    console.log(base64);
+  }
+  async function connectViaQRUpload() {
+    const result = await launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri; // THIS
+    console.log(uri);
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64 = reader.result;
+    };
+
+    const final = readQRCode(base64);
+  }
+
+  function connectViaQRCapture() {
+    console.log("TODO");
+  }
+
+  function connectViaToken() {
+    console.log("TODO");
+  }
+
+  function renderSubMenu() {
     let instruction = "";
     let content = <></>;
-    console.log("selectedMenu", selectedMenu);
     switch (selectedMenu) {
       case 0:
         return null;
@@ -122,11 +162,22 @@ const InterfaceDiscoveryComponent = () => {
           "Automatically attempt to locate and connect with a locally running instance of Ophelia present on this machine";
         content = (
           <>
-            <Text style={{ color: "white", fontSize: 15 }}>
-              {connected
-                ? "Currently connected to Ophelia. You may now close this window."
-                : "Not currently connected. Please use the other options to connect or make sure Ophelia is running properly on this machine."}
-            </Text>
+            <View>
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 20,
+                  width: "80%",
+                  textAlign: "center",
+                  alignSelf: "center",
+                  margin: 20,
+                }}
+              >
+                {connected
+                  ? "Currently connected to Ophelia. You may now close this window."
+                  : "Not currently connected. Please use the other options to connect or make sure Ophelia is running properly on this machine."}
+              </Text>
+            </View>
           </>
         );
         break;
@@ -141,17 +192,20 @@ const InterfaceDiscoveryComponent = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 gap: 10,
+                flexWrap: "wrap",
               }}
             >
               <BigButtonWithIconComponent
                 text="Upload QR Code"
-                onPress={() => {}}
+                onPress={async () => {
+                  await connectViaQRUpload();
+                }}
                 icon={icons[3]}
                 index={99}
               />
               <BigButtonWithIconComponent
                 text="Use Camera"
-                onPress={() => {}}
+                onPress={connectViaQRCapture}
                 icon={icons[4]}
                 index={99}
               />
@@ -171,6 +225,7 @@ const InterfaceDiscoveryComponent = () => {
                 style={{
                   justifyContent: "space-between",
                   alignItems: "flex-end",
+                  gap: 12,
                 }}
               >
                 <Text
@@ -182,23 +237,101 @@ const InterfaceDiscoveryComponent = () => {
               </View>
 
               <View style={{ flex: 1, justifyContent: "space-between" }}>
-                <TextInput
-                  placeholder="Enter token"
+                <LinearGradient
+                  colors={["#161515", "#0f0f0f"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
                   style={{
-                    backgroundColor: "white",
-                    padding: 5,
                     borderRadius: 5,
+                    borderWidth: 2,
+                    borderColor: "rgba(255, 255, 255, 0.7)",
                     marginBottom: 10,
                   }}
-                />
-                <TextInput
-                  placeholder="Enter address"
+                >
+                  <TextInput
+                    placeholder="Enter token"
+                    placeholderTextColor={"rgba(104, 104, 104, 0.7)"}
+                    value={token}
+                    onChangeText={setToken}
+                    style={{
+                      color: "white",
+                      padding: 5,
+                      borderRadius: 5,
+                    }}
+                    onSubmitEditing={connectViaToken}
+                  />
+                </LinearGradient>
+                <LinearGradient
+                  colors={["#161515", "#0f0f0f"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
                   style={{
-                    backgroundColor: "white",
-                    padding: 5,
+                    borderRadius: 5,
+                    borderWidth: 2,
+                    borderColor: "rgba(255, 255, 255, 0.7)",
+                  }}
+                >
+                  <TextInput
+                    placeholder="Enter address"
+                    placeholderTextColor={"rgba(104, 104, 104, 0.7)"}
+                    value={address}
+                    onChangeText={setAddress}
+                    style={{
+                      color: "white",
+                      padding: 5,
+                      borderRadius: 5,
+                    }}
+                    onSubmitEditing={connectViaToken}
+                  />
+                </LinearGradient>
+              </View>
+            </View>
+            <View
+              style={{
+                alignItems: "flex-end",
+                marginTop: 10,
+                flexDirection: "row-reverse",
+                gap: 10,
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 5,
+                  padding: 1,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "black",
+                    padding: 10,
                     borderRadius: 5,
                   }}
-                />
+                  onPress={() => {
+                    setToken("");
+                    setAddress("");
+                  }}
+                >
+                  <Text style={{ color: "white" }}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 5,
+                  padding: 1,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "black",
+                    padding: 10,
+                    borderRadius: 5,
+                  }}
+                  onPress={connectViaToken}
+                >
+                  <Text style={{ color: "white" }}>Connect</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </>
@@ -206,31 +339,12 @@ const InterfaceDiscoveryComponent = () => {
         break;
     }
     return (
-      <View
-        style={{
-          padding: 10,
-          borderRadius: 10,
-          justifyContent: "flex-start",
-          alignSelf: "stretch",
-        }}
-      >
-        <Text style={{ color: "white", fontSize: 30, marginBottom: 10 }}>
-          Instructions
-        </Text>
-        <Text
-          style={{
-            color: "white",
-            fontSize: 15,
-            marginLeft: 15,
-            marginBottom: 60,
-          }}
-        >
-          {instruction}
-        </Text>
-        {content}
-      </View>
+      <InterfaceDiscoverySubComponent
+        instruction={instruction}
+        content={content}
+      />
     );
-  }, [selectedMenu, connected]);
+  }
 
   return (
     <ScrollView
@@ -331,6 +445,8 @@ const InterfaceDiscoveryComponent = () => {
             onPress={() => {
               if (selectedMenu === 3) setSelectedMenu(0);
               else setSelectedMenu(3);
+              setToken("");
+              setAddress("");
             }}
             index={3}
             selectedMenu={selectedMenu}
@@ -369,7 +485,7 @@ const InterfaceDiscoveryComponent = () => {
           padding: 10,
         }}
       >
-        {subMenuContent}
+        {renderSubMenu()}
       </View>
     </ScrollView>
   );
