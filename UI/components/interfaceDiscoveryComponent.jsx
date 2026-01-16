@@ -119,6 +119,25 @@ const InterfaceDiscoveryComponent = () => {
   function readQRCode(base64) {
     console.log(base64);
   }
+
+  async function toBase64(uri) {
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]); // strip data URI
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const file = new File([blob], "qr.png", { type: blob.type });
+    const base64 = await fileToBase64(file);
+    return base64;
+  }
+
   async function connectViaQRUpload() {
     const result = await launchImageLibraryAsync({
       mediaTypes: "images",
@@ -131,14 +150,7 @@ const InterfaceDiscoveryComponent = () => {
     const uri = result.assets[0].uri; // THIS
     console.log(uri);
 
-    const response = await fetch(uri);
-    const blob = await response.blob();
-
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      const base64 = reader.result;
-    };
+    const base64 = await toBase64(uri);
 
     const final = readQRCode(base64);
   }
