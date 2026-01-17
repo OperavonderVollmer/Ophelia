@@ -11,8 +11,11 @@ import BigButtonWithIconComponent from "./sub-components/bigButtonWithIconCompon
 import Emitter from "../helpers/Emitter";
 import { LinearGradient } from "expo-linear-gradient";
 import { InterfaceDiscoverySubComponent } from "./sub-components/interfaceDiscoverySubComponent";
-import { launchImageLibraryAsync } from "expo-image-picker";
-
+import {
+  launchImageLibraryAsync,
+  launchCameraAsync,
+  requestCameraPermissionsAsync,
+} from "expo-image-picker";
 const InterfaceDiscoveryComponent = () => {
   const [icons, setIcons] = React.useState([
     <Path
@@ -112,6 +115,9 @@ const InterfaceDiscoveryComponent = () => {
   const [token, setToken] = React.useState("");
   const [address, setAddress] = React.useState("");
 
+  const [hasPermission, setHasPermission] =
+    (React.useState < boolean) | (null > null);
+
   function _connect() {
     console.log("TODO");
   }
@@ -147,7 +153,7 @@ const InterfaceDiscoveryComponent = () => {
 
     if (result.canceled) return;
 
-    const uri = result.assets[0].uri; // THIS
+    const uri = result.assets[0].uri;
     console.log(uri);
 
     const base64 = await toBase64(uri);
@@ -155,8 +161,22 @@ const InterfaceDiscoveryComponent = () => {
     const final = readQRCode(base64);
   }
 
-  function connectViaQRCapture() {
-    console.log("TODO");
+  async function connectViaQRCapture() {
+    await requestCameraPermissionsAsync();
+
+    const result = await launchCameraAsync({
+      mediaTypes: "images",
+      allowsEditing: false,
+      quality: 1,
+    });
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    console.log(uri);
+
+    const base64 = await toBase64(uri);
+
+    const final = readQRCode(base64);
   }
 
   function connectViaToken() {
