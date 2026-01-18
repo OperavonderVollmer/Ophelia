@@ -115,9 +115,6 @@ const InterfaceDiscoveryComponent = () => {
   const [token, setToken] = React.useState("");
   const [address, setAddress] = React.useState("");
 
-  const [hasPermission, setHasPermission] =
-    (React.useState < boolean) | (null > null);
-
   function _connect() {
     console.log("TODO");
   }
@@ -169,7 +166,10 @@ const InterfaceDiscoveryComponent = () => {
       allowsEditing: false,
       quality: 1,
     });
+    
     if (result.canceled) return;
+
+    console.log("Captured image");
 
     const uri = result.assets[0].uri;
     console.log(uri);
