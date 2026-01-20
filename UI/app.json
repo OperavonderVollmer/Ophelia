@@ -14,13 +14,18 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is required to scan pairing QR codes."
+      }
     },
     "permissions": [
-      "CAMERA",
+      "CAMERA"
     ],
     "android": {
-      "permissions": ["CAMERA"],
+      "permissions": [
+        "CAMERA"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -33,7 +38,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
-    ],
+      "expo-font",
+    ]
   }
 }
