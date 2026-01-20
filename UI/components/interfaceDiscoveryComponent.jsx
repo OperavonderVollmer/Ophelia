@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import {
   launchCameraAsync,
   requestCameraPermissionsAsync,
 } from "expo-image-picker";
+import { CameraView, Camera } from "expo-camera";
+
 const InterfaceDiscoveryComponent = () => {
   const [icons, setIcons] = React.useState([
     <Path
@@ -115,68 +117,121 @@ const InterfaceDiscoveryComponent = () => {
   const [token, setToken] = React.useState("");
   const [address, setAddress] = React.useState("");
 
+  const [cameraPermission, requestCameraPermission] =
+    Camera.useCameraPermissions();
+  const [scanned, setScanned] = React.useState("");
+
+  useEffect(() => {
+    if (cameraPermission === null || !cameraPermission) {
+      requestCameraPermission();
+    }
+  }, [cameraPermission]);
+
   function _connect() {
     console.log("TODO");
   }
 
-  function readQRCode(base64) {
-    console.log(base64);
-  }
-
-  async function toBase64(uri) {
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(",")[1]); // strip data URI
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+  const depreciated_methods = () => {
+    /**
+     * @deprecated
+     */
+    function readQRCode(base64) {
+      console.log(base64);
     }
 
-    const response = await fetch(uri);
-    const blob = await response.blob();
+    /**
+     * @deprecated
+     */
+    async function toBase64(uri) {
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]); // strip data URI
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
 
-    const file = new File([blob], "qr.png", { type: blob.type });
-    const base64 = await fileToBase64(file);
-    return base64;
-  }
+      const response = await fetch(uri);
+      const blob = await response.blob();
 
-  async function connectViaQRUpload() {
-    const result = await launchImageLibraryAsync({
-      mediaTypes: "images",
-      allowsEditing: false,
-      quality: 1,
-    });
+      const file = new File([blob], "qr.png", { type: blob.type });
+      const base64 = await fileToBase64(file);
+      return base64;
+    }
 
-    if (result.canceled) return;
+    /**
+     * @deprecated
+     */
+    async function connectViaQRUpload() {
+      const result = await launchImageLibraryAsync({
+        mediaTypes: "images",
+        allowsEditing: false,
+        quality: 1,
+      });
 
-    const uri = result.assets[0].uri;
-    console.log(uri);
+      if (result.canceled) return;
 
-    const base64 = await toBase64(uri);
+      const uri = result.assets[0].uri;
+      console.log(uri);
 
-    const final = readQRCode(base64);
-  }
+      const base64 = await toBase64(uri);
 
-  async function connectViaQRCapture() {
-    await requestCameraPermissionsAsync();
+      const final = readQRCode(base64);
+    }
 
-    const result = await launchCameraAsync({
-      mediaTypes: "images",
-      allowsEditing: false,
-      quality: 1,
-    });
-    
-    if (result.canceled) return;
+    /**
+     * @deprecated
+     */
+    async function connectViaQRCapture() {
+      await requestCameraPermissionsAsync();
 
-    console.log("Captured image");
+      const result = await launchCameraAsync({
+        mediaTypes: "images",
+        allowsEditing: false,
+        quality: 1,
+      });
 
-    const uri = result.assets[0].uri;
-    console.log(uri);
+      if (result.canceled) return;
 
-    const base64 = await toBase64(uri);
+      console.log("Captured image");
 
-    const final = readQRCode(base64);
+      const uri = result.assets[0].uri;
+      console.log(uri);
+
+      const base64 = await toBase64(uri);
+
+      const final = readQRCode(base64);
+    }
+  };
+
+  async function scanQRCodeWithCamera() {
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
+    >
+      <CameraView
+        style={{ flex: 1 }}
+        facing="back"
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr"],
+        }}
+        onBarcodeScanned={(result) => {
+          if (result.data) {
+            console.log("Scanned QR Code:", result.data);
+            setScanned(result.data);
+          }
+        }}
+      />
+    </View>;
   }
 
   function connectViaToken() {
@@ -227,14 +282,14 @@ const InterfaceDiscoveryComponent = () => {
                 flexWrap: "wrap",
               }}
             >
-              <BigButtonWithIconComponent
+              {/* <BigButtonWithIconComponent
                 text="Upload QR Code"
                 onPress={async () => {
                   await connectViaQRUpload();
                 }}
                 icon={icons[3]}
                 index={99}
-              />
+              /> */}
               <BigButtonWithIconComponent
                 text="Use Camera"
                 onPress={connectViaQRCapture}
