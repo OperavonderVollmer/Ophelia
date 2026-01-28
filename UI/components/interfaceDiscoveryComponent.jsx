@@ -16,7 +16,7 @@ import {
   launchCameraAsync,
   requestCameraPermissionsAsync,
 } from "expo-image-picker";
-import { CameraView, Camera } from "expo-camera";
+import { CameraView, Camera, useCameraPermissions } from "expo-camera";
 
 const InterfaceDiscoveryComponent = () => {
   const [icons, setIcons] = React.useState([
@@ -117,15 +117,9 @@ const InterfaceDiscoveryComponent = () => {
   const [token, setToken] = React.useState("");
   const [address, setAddress] = React.useState("");
 
-  const [cameraPermission, requestCameraPermission] =
-    Camera.useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [usingCamera, setUsingCamera] = React.useState(false);
   const [scanned, setScanned] = React.useState("");
-
-  useEffect(() => {
-    if (cameraPermission === null || !cameraPermission) {
-      requestCameraPermission();
-    }
-  }, [cameraPermission]);
 
   function _connect() {
     console.log("TODO");
@@ -205,34 +199,7 @@ const InterfaceDiscoveryComponent = () => {
     }
   };
 
-  async function scanQRCodeWithCamera() {
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
-    >
-      <CameraView
-        style={{ flex: 1 }}
-        facing="back"
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr"],
-        }}
-        onBarcodeScanned={(result) => {
-          if (result.data) {
-            console.log("Scanned QR Code:", result.data);
-            setScanned(result.data);
-          }
-        }}
-      />
-    </View>;
-  }
+  async function scanQRCodeWithCamera() {}
 
   function connectViaToken() {
     console.log("TODO");
@@ -292,7 +259,9 @@ const InterfaceDiscoveryComponent = () => {
               /> */}
               <BigButtonWithIconComponent
                 text="Use Camera"
-                onPress={connectViaQRCapture}
+                onPress={() => {
+                  Emitter.publish("OPR:ScanQRCode");
+                }}
                 icon={icons[4]}
                 index={99}
               />
@@ -489,7 +458,6 @@ const InterfaceDiscoveryComponent = () => {
       >
         Interface Discovery
       </Text>
-
       <View
         style={{
           justifyContent: selectedMenu === 0 ? "center" : "flex-start",

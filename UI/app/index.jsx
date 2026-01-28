@@ -14,6 +14,7 @@ import {
   Poppins_600SemiBold,
 } from "@expo-google-fonts/poppins";
 import { styles } from "./styles";
+import { QuickCamera } from "../components/sub-components/quickCamera";
 
 const Home = () => {
   const [fontsLoaded] = useFonts({
@@ -59,6 +60,7 @@ const Home = () => {
 
   return (
     <React.Fragment>
+      <QuickCamera />
       <LinearGradient
         colors={["rgba(36, 36, 36, 1)", "rgba(17, 17, 17, 1)"]}
         start={{ x: 0.5, y: 0 }} // top center
