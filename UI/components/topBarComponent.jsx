@@ -113,7 +113,7 @@ const TopBarComponent = ({ styles }) => {
           Emitter.publish("OPR:RequestPlugins");
         }}
       />
-      <ButtonWithIconComponent
+      {/* <ButtonWithIconComponent
         styles={styles}
         icon={
           <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
@@ -143,7 +143,7 @@ const TopBarComponent = ({ styles }) => {
         onPress={() => {
           Emitter.publish("OPR:OpenHelp");
         }}
-      />
+      /> */}
       <ButtonWithIconComponent
         styles={styles}
         icon={serverStatusSVG}

@@ -24,6 +24,7 @@ const Home = () => {
   });
 
   const [popup, setPopup] = React.useState(null);
+  const [usingCamera, setUsingCamera] = React.useState(false);
 
   const handleNewPopup = React.useCallback((payload) => {
     console.log(`New popup: ${JSON.stringify(payload)}`);
@@ -58,9 +59,16 @@ const Home = () => {
     return () => unsubscribe();
   }, []);
 
+  React.useEffect(() => {
+    const unsubscribe = Emitter.subscribe("OPR:ScanQRCode", () => {
+      setUsingCamera(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <React.Fragment>
-      <QuickCamera />
+      {usingCamera && <QuickCamera callback={() => setUsingCamera(false)} />}
       <LinearGradient
         colors={["rgba(36, 36, 36, 1)", "rgba(17, 17, 17, 1)"]}
         start={{ x: 0.5, y: 0 }} // top center

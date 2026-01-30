@@ -1,15 +1,12 @@
 import Emitter from "./Emitter";
 
-const host = "ws://127.0.0.1:6990";
+let host = "ws://127.0.0.1:6990";
 
 let ws = null;
 let reconnectTimer = null;
 let reconnectDelay = 1000;
 const MAX_DELAY = 30000;
-
-/* -----------------------------
-   Connection Lifecycle
------------------------------ */
+let interfaces = [];
 
 function connect() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
@@ -68,10 +65,6 @@ function scheduleReconnect() {
   }, reconnectDelay);
 }
 
-/* -----------------------------
-   Safe Send
------------------------------ */
-
 function send(message) {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     console.warn("Socket not open, reconnecting...");
@@ -80,10 +73,6 @@ function send(message) {
   }
   ws.send(message);
 }
-
-/* -----------------------------
-   Message Builders 
------------------------------ */
 
 function generateRequestId() {
   return Math.random().toString(36).substring(2, 9);
@@ -105,7 +94,7 @@ function requestPlugins() {
     "REQUEST",
     "REQUEST_PLUGINS",
     generateRequestId(),
-    {}
+    {},
   );
 }
 
@@ -115,7 +104,7 @@ function requestInputScheme(plugin) {
     "REQUEST",
     "REQUEST_INPUT_SCHEME",
     generateRequestId(),
-    { plugin }
+    { plugin },
   );
 }
 
@@ -126,22 +115,17 @@ function requestResponse(plugin, data) {
   });
 }
 
-/* -----------------------------
-   Emitter Wiring
------------------------------ */
-
 Emitter.subscribe("OPR:RequestPlugins", () => send(requestPlugins()));
 Emitter.subscribe("OPR:RequestInputScheme", (plugin) =>
-  send(requestInputScheme(plugin))
+  send(requestInputScheme(plugin)),
 );
 Emitter.subscribe("OPR:RequestResponse", (plugin, data) =>
-  send(requestResponse(plugin, data))
+  send(requestResponse(plugin, data)),
 );
 Emitter.subscribe("OPR:Refresh", () => connect());
-
-/* -----------------------------
-   Bootstrap
------------------------------ */
+Emitter.subscribe("OPR:QRCodeScanned", (data) => {
+  interfaces = data.interfaces || [];
+});
 
 connect();
 

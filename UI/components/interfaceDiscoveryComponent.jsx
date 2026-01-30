@@ -121,6 +121,12 @@ const InterfaceDiscoveryComponent = () => {
   const [usingCamera, setUsingCamera] = React.useState(false);
   const [scanned, setScanned] = React.useState("");
 
+  React.useEffect(()=>{
+    Emitter.subscribe("OPR:QRCodeScanned", (data) => {
+      setScanned(data);
+    });
+  }, [])
+
   function _connect() {
     console.log("TODO");
   }

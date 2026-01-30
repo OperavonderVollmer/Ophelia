@@ -3,29 +3,16 @@ import { View, Dimensions, Text, Button, TouchableOpacity } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import Emitter from "../../helpers/Emitter";
 
-export const QuickCamera = () => {
+export const QuickCamera = ({ callback }) => {
   const [permission, requestPermission] = useCameraPermissions();
-  const [usingCamera, setUsingCamera] = React.useState(false);
   const [scanned, setScanned] = React.useState(false);
   const [window, setWindow] = React.useState(Dimensions.get("window"));
-
-  React.useEffect(() => {
-    if (scanned) {
-    }
-  }, [scanned]);
 
   React.useEffect(() => {
     const subscription = Dimensions.addEventListener("change", () => {
       setWindow(Dimensions.get("window"));
     });
     return () => subscription?.remove();
-  }, []);
-
-  React.useEffect(() => {
-    const unsubscribe = Emitter.subscribe("OPR:ScanQRCode", () => {
-      setUsingCamera(true);
-    });
-    return () => unsubscribe();
   }, []);
 
   return (
@@ -39,10 +26,8 @@ export const QuickCamera = () => {
         right: 0,
         bottom: 0,
         backgroundColor: "rgba(0, 0, 0, 0.18)",
-        zIndex: usingCamera ? 1000 : -1,
-        display: usingCamera ? "flex" : "none",
-        // zIndex: 1000,
-        // display: "flex",
+        zIndex: 1000,
+        display: "flex",
       }}
     >
       <View
@@ -88,10 +73,8 @@ export const QuickCamera = () => {
               <Text>Camera permission not granted</Text>
               <TouchableOpacity
                 onPress={() => {
-                  console.log("Requesting permission...");
                   if (!permission || !permission.granted) {
                     requestPermission();
-                    console.log("Requesting permission 2...");
                   }
                 }}
               >
@@ -102,27 +85,26 @@ export const QuickCamera = () => {
             <CameraView
               style={{
                 flex: 1,
-                // aspectRatio: 1,
-                objectFit: "cover", // WEB ONLY, but harmless on native
+                objectFit: "cover",
                 justifyContent: "center",
                 alignItems: "center",
               }}
               facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: ["qr"],
-              }}
+              barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
               onBarcodeScanned={(result) => {
-                if (result.data) {
-                  console.log("Scanned QR Code:", result.data);
-                  setScanned(true);
-                  // setUsingCamera(false); // commented for now
-                  Emitter.setState("OPR:QRCodeScanned", result.data);
-                }
+                if (!result.data) return;
+                if (scanned) return;
+
+                console.log("Scanned QR Code:", result.data);
+                setScanned(true);
+                Emitter.setState("OPR:QRCodeScanned", result.data);
+
+                callback();
               }}
             />
           )}
         </View>
-        <TouchableOpacity onPress={() => setUsingCamera(false)}>
+        <TouchableOpacity onPress={() => callback()}>
           <Text style={{ color: "white", fontSize: 20 }}>Cancel</Text>
         </TouchableOpacity>
       </View>
