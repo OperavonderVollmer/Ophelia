@@ -8,9 +8,7 @@ if root not in sys.path:
     sys.path.insert(0, root)
 import PluginManager as PM
 
-class CallableAPI:
-    
-
+class CallableAPI: 
 
     def __init__(self, PluginManager, host="127.0.0.1", port=6980, version: int=1):
         self.host = host

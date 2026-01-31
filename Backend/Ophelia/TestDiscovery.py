@@ -3,6 +3,7 @@ import json
 import base64
 import sys
 import socket
+import websockets
 
 
 
@@ -11,7 +12,7 @@ token = input("Enter your token: ")
 ipaddress = input("Enter IP: ")
 port = input("Enter Port: ")
 
-async def test():
+async def test_TCP():
 
     try:
         reader, writer = await asyncio.open_connection(ipaddress, port)
@@ -32,6 +33,14 @@ async def test():
         await writer.wait_closed()
         return True
     
+async def test():
+    uri = f"ws://{ipaddress}:{port}"
+    async with websockets.connect(uri) as ws:
+        print("Connected")
+        await ws.send(token)
+        response = await ws.recv()
+        print(f"Response: {response}")
+
 
 if __name__ == "__main__":
 

@@ -95,9 +95,11 @@ export const QuickCamera = ({ callback }) => {
                 if (!result.data) return;
                 if (scanned) return;
 
-                console.log("Scanned QR Code:", result.data);
+                const data = JSON.parse(result.data);
+
+                console.log("Scanned QR Code:", data);
                 setScanned(true);
-                Emitter.setState("OPR:QRCodeScanned", result.data);
+                Emitter.setState("OPR:QRCodeScanned", [data]);
 
                 callback();
               }}

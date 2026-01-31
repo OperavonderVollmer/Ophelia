@@ -9,7 +9,6 @@ import asyncio
 from OperaCryptography import OperaCryptography
 import threading
 import base64
-import websockets
     
 class InterfaceDiscover:
     
@@ -51,9 +50,8 @@ class InterfaceDiscover:
             interface_list = []
             for name, ips in interfaces.items():
                 for ip in ips:
-                    if ip != '127.0.0.1' and not (ip.startswith("169.254.") or ip.startswith("0.") or ip.startswith("127.0.0.") or ip.startswith("255.")):
+                    if ip != '127.0.0.1':
                         interface_list.append({'name': name, 'ip': ip})
-                    
 
             if include_loopback:
                 interface_list.append({'name': 'localhost', 'ip': '127.0.0.1'})
@@ -160,40 +158,24 @@ while True:
         
     
     async def _listen(self, iface, stop_event):
-        async def handler(ws):
-            try:
-                self.state = self.states[2]
-                message = await asyncio.wait_for(ws.recv(), timeout=10)
-                cipher_bytes = base64.urlsafe_b64decode(message)
-                decrypted = self.HybridCrypt.decrypt(cipher_bytes).decode("utf-8")
-            except Exception:
-                self.state = self.states[3]
-                await ws.send(json.dumps({'status': False}))
-                await ws.close()
-                return
-            
-            if not getattr(self, 'bound', False) and decrypted == self.one_time_token:
-                self.bound = True
-                self.one_time_token = None
-                await ws.send(json.dumps({'status': True}))
-                await ws.close()
-                stop_event.set()
-                self._discovery_done.set()
-                self.found_device_callback((iface['interface'], iface['port']))
-                self.state = self.states[3]
-            else:
-                await ws.send(json.dumps({'status': False}))
-                await ws.close()
-                self.state = self.states[1]
         
-        
-        server = await websockets.serve(handler, iface['interface'], iface['port'])
-        await stop_event.wait()  
-        server.close()
-        await server.wait_closed()
-
-
+        try:
+            async def client_handler(reader, writer):
+                await self._handle_client(reader, writer, stop_event, self.found_device_callback)
             
+            server = await asyncio.start_server(
+                client_handler,  
+                iface['interface'], 
+                iface['port']
+            )
+        
+            async with server:
+                await stop_event.wait()
+                
+        except OSError as e:
+            pass 
+        except Exception as e:
+            print(f"Failed to start server on {iface['interface']} - {e}")
     
     async def _listen_all(self, pairing_data):
         interfaces = pairing_data['interfaces']
@@ -240,11 +222,11 @@ while True:
             stop_event.set()
             self._discovery_done.set()
             found_device_callback(addr)
-            self.state = self.states[3]
+            self.state = self.states[2]
         else:
             writer.write(b'FAILURE')
             await writer.drain()
-            self.state = self.states[2]
+            self.state = self.states[4]
 
         writer.close()
         await writer.wait_closed()
