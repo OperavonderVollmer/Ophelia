@@ -1,12 +1,13 @@
 import Emitter from "./Emitter";
 
-let host = "ws://127.0.0.1:6990";
+const defaultHost = "ws://127.0.0.1:6990";
+
+let host = defaultHost; // TODO: Change default host later
 
 let ws = null;
 let reconnectTimer = null;
 let reconnectDelay = 1000;
 const MAX_DELAY = 30000;
-let interfaces = [];
 
 function connect() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
@@ -55,6 +56,60 @@ function connect() {
   };
 }
 
+async function discoverWS(interfaces, port, token) {
+  const promises = interfaces.map(async (iface) => {
+    const url = `ws://${iface.ip}:${port}/discover`;
+    console.log("Discovering Ophelia on", url);
+
+    return new Promise((resolve) => {
+      let resolved = false;
+
+      try {
+        const discoverySocket = new WebSocket(url);
+
+        discoverySocket.onopen = () => {
+          discoverySocket.send(JSON.stringify({ token }));
+        };
+
+        discoverySocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.success) {
+              console.log("Discovered Ophelia on", url);
+              resolved = true;
+              discoverySocket.close();
+              resolve(iface.ip);
+            } else {
+              discoverySocket.close();
+              resolve(null);
+            }
+          } catch {
+            discoverySocket.close();
+            resolve(null);
+          }
+        };
+
+        discoverySocket.onerror = (err) => {
+          console.log(
+            `Failed to discover Ophelia on ${url}: ${err.message || err}`,
+          );
+          if (!resolved) resolve(null);
+        };
+
+        discoverySocket.onclose = () => {
+          if (!resolved) resolve(null);
+        };
+      } catch (err) {
+        console.log(`Exception connecting to ${url}: ${err.message}`);
+        resolve(null);
+      }
+    });
+  });
+
+  const results = await Promise.all(promises);
+  return results.filter(Boolean);
+}
+
 function scheduleReconnect() {
   if (reconnectTimer) return;
 
@@ -76,6 +131,30 @@ function send(message) {
 
 function generateRequestId() {
   return Math.random().toString(36).substring(2, 9);
+}
+
+/**
+ * Checks if the given interface IP is usable for Ophelia.
+ * The following interfaces are considered unusable and will return false:
+ * - 127.* (localhost)
+ * - ::1 (localhost in IPv6)
+ * - localhost
+ * - 0.0.0.0 (unassigned IP address)
+ * - 169.254.* (link-local addresses)
+ * @param {string} interfaceIP - The IP address of the interface to check.
+ * @returns {boolean} true if the interface is usable, false otherwise.
+ */
+function filterUseableInterface(interfaceIP) {
+  if (
+    interfaceIP.startsWith("127.") ||
+    interfaceIP === "::1" ||
+    interfaceIP === "localhost" ||
+    interfaceIP === "0.0.0.0" ||
+    interfaceIP === "169.254."
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function messageScheme(version, type, action, requestId, payload) {
@@ -124,7 +203,22 @@ Emitter.subscribe("OPR:RequestResponse", (plugin, data) =>
 );
 Emitter.subscribe("OPR:Refresh", () => connect());
 Emitter.subscribe("OPR:QRCodeScanned", (data) => {
-  interfaces = data.interfaces || [];
+  console.log("Processing scanned QR code data:", data);
+  const interfaces = data.interfaces;
+  console.log("Interfaces:", interfaces);
+
+  const candidates = interfaces.filter((i) => filterUseableInterface(i.ip));
+
+  console.log("Filtered interfaces:", candidates);
+
+  discover(candidates, data.port, data.token).then((ip) => {
+    if (ip) {
+      host = `ws://${ip}:${data.port}`;
+      connect();
+    } else {
+      console.log("No usable interfaces found");
+    }
+  });
 });
 
 connect();
