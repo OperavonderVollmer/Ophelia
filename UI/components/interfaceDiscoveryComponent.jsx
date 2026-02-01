@@ -114,18 +114,22 @@ const InterfaceDiscoveryComponent = () => {
   const [connected, setConnected] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState(0); // 0 = none, 1 = Connect via localhost, 2 = Connect via QR code, 3 = Direct input of token and address
 
-  const [token, setToken] = React.useState("");
-  const [address, setAddress] = React.useState("");
+  //TODO
+  const [token, setToken] = React.useState(
+    "AAABAD4DH_Q9eWVeffILamu19WG1Np9VG4y72EtZrIaOtaOhzROd0PCeI8SILkJgSmif4KjnAjfXXCc9krGfv19kt8fjfMgtZQJfXm1Nl1aJfeD1HShrAttlXsunWHmUYZJJ0kUEM-SLL9RngLrjbPIIpGNh7rTIwDFT2EEcPDrrPP-zqYUk5UZxKNbBm8C1fqsyrLrJWLEdCImbLYagwOM4QsGubTR--iL4jVQqhG_Pptwfj9cTxace4CoznADCgh-SYB3-YzORiVn2Fw7aynGFuPfxqygNBD3d_nYmrgyuypNVhYSqh5ug_8UNpGRgAPt-YFwLyVADE6-XrNxRbpfETcNnQUFBQUFCcGYwOHFVTE1ldnA2ZVRYbl8yaFkxLVN1YVcxUkJHbFhmbjVuaFZhcFA0d213a1AyV3laeVNfcmtlYzAzTzR0LVdrVWFTYVZPT2JubjY3N1ltQkJlUDRzZ1U5ZnFyMlZiYTNEUURnUnI3MTV5WEw4Rlk0bG5VaGc5c0kwYUtxcjJ6STZMRw==",
+  );
+  const [ip, setIp] = React.useState("10.147.19.1");
+  const [port, setPort] = React.useState("8080");
 
   const [permission, requestPermission] = useCameraPermissions();
   const [usingCamera, setUsingCamera] = React.useState(false);
   const [scanned, setScanned] = React.useState("");
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     Emitter.subscribe("OPR:QRCodeScanned", (data) => {
       setScanned(data);
     });
-  }, [])
+  }, []);
 
   function _connect() {
     console.log("TODO");
@@ -208,7 +212,15 @@ const InterfaceDiscoveryComponent = () => {
   async function scanQRCodeWithCamera() {}
 
   function connectViaToken() {
-    console.log("TODO");
+    if (!token || !ip || !port) return alert("Please fill out all fields");
+
+    Emitter.setState("OPR:FoundInterface", [
+      {
+        ip: ip,
+        port: port,
+        token: token,
+      },
+    ]);
   }
 
   function renderSubMenu() {
@@ -295,7 +307,12 @@ const InterfaceDiscoveryComponent = () => {
                 >
                   Token:
                 </Text>
-                <Text style={{ color: "white", fontSize: 15 }}>Address:</Text>
+                <Text
+                  style={{ color: "white", fontSize: 15, marginBottom: 10 }}
+                >
+                  IP Address:
+                </Text>
+                <Text style={{ color: "white", fontSize: 15 }}>Port:</Text>
               </View>
 
               <View style={{ flex: 1, justifyContent: "space-between" }}>
@@ -331,13 +348,37 @@ const InterfaceDiscoveryComponent = () => {
                     borderRadius: 5,
                     borderWidth: 2,
                     borderColor: "rgba(255, 255, 255, 0.7)",
+                    marginBottom: 10,
                   }}
                 >
                   <TextInput
-                    placeholder="Enter address"
+                    placeholder="Enter IP address"
                     placeholderTextColor={"rgba(104, 104, 104, 0.7)"}
-                    value={address}
-                    onChangeText={setAddress}
+                    value={ip}
+                    onChangeText={setIp}
+                    style={{
+                      color: "white",
+                      padding: 5,
+                      borderRadius: 5,
+                    }}
+                    onSubmitEditing={connectViaToken}
+                  />
+                </LinearGradient>
+                <LinearGradient
+                  colors={["#161515", "#0f0f0f"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={{
+                    borderRadius: 5,
+                    borderWidth: 2,
+                    borderColor: "rgba(255, 255, 255, 0.7)",
+                  }}
+                >
+                  <TextInput
+                    placeholder="Enter port"
+                    placeholderTextColor={"rgba(104, 104, 104, 0.7)"}
+                    value={port}
+                    onChangeText={setPort}
                     style={{
                       color: "white",
                       padding: 5,
@@ -371,7 +412,7 @@ const InterfaceDiscoveryComponent = () => {
                   }}
                   onPress={() => {
                     setToken("");
-                    setAddress("");
+                    setIp("");
                   }}
                 >
                   <Text style={{ color: "white" }}>Clear</Text>
@@ -506,8 +547,8 @@ const InterfaceDiscoveryComponent = () => {
             onPress={() => {
               if (selectedMenu === 3) setSelectedMenu(0);
               else setSelectedMenu(3);
-              setToken("");
-              setAddress("");
+              // setToken("");
+              // setIp(""); TODO
             }}
             index={3}
             selectedMenu={selectedMenu}

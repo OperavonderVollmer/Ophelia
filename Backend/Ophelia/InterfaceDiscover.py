@@ -164,9 +164,12 @@ while True:
             try:
                 self.state = self.states[2]
                 message = await asyncio.wait_for(ws.recv(), timeout=10)
-                cipher_bytes = base64.urlsafe_b64decode(message)
+                token = json.loads(message)['token']
+                print(f"Received message: {token}")
+                cipher_bytes = base64.urlsafe_b64decode(token)
                 decrypted = self.HybridCrypt.decrypt(cipher_bytes).decode("utf-8")
-            except Exception:
+            except Exception as e:
+                print(f"\nConnection timed out with client: {iface['interface']}:{iface['port']} - {e}")
                 self.state = self.states[3]
                 await ws.send(json.dumps({'status': False}))
                 await ws.close()
@@ -182,6 +185,7 @@ while True:
                 self.found_device_callback((iface['interface'], iface['port']))
                 self.state = self.states[3]
             else:
+                print(f"Connection failed with client: {iface['interface']}:{iface['port']}")
                 await ws.send(json.dumps({'status': False}))
                 await ws.close()
                 self.state = self.states[1]

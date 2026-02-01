@@ -7,15 +7,22 @@ let host = defaultHost; // TODO: Change default host later
 let ws = null;
 let reconnectTimer = null;
 let reconnectDelay = 1000;
+let attempts = 0;
 const MAX_DELAY = 30000;
 
-function connect() {
+function connect(wHost = null) {
   if (ws && ws.readyState === WebSocket.OPEN) return;
+  if ((attempts) => 5) {
+    attempts = 0;
+    host = defaultHost;
+  }
+  if (wHost) host = wHost;
 
   console.log(`Connecting to ${host}...`);
   ws = new WebSocket(host);
 
   ws.onopen = () => {
+    attempts = 0;
     console.log("Connection opened");
     reconnectDelay = 1000;
     send(requestPlugins());
@@ -46,6 +53,7 @@ function connect() {
   ws.onclose = () => {
     console.log("Disconnected from backend");
     Emitter.publish("OPR:Online", [false]);
+    attempts += 1;
     scheduleReconnect();
   };
 
@@ -56,54 +64,52 @@ function connect() {
   };
 }
 
-async function discoverWS(interfaces, port, token) {
-  const promises = interfaces.map(async (iface) => {
-    const url = `ws://${iface.ip}:${port}/discover`;
-    console.log("Discovering Ophelia on", url);
+async function discoverOne(iface, port, token) {
+  const url = `ws://${iface.ip}:${port}`;
+  let discoverySocket = null;
 
-    return new Promise((resolve) => {
-      let resolved = false;
+  console.log("Discovering Ophelia on", url);
 
+  return new Promise((resolve) => {
+    discoverySocket = new WebSocket(url);
+
+    discoverySocket.onopen = () => {
+      console.log("Established connection, sending token");
+      discoverySocket.send(JSON.stringify({ token }));
+    };
+
+    discoverySocket.onmessage = (event) => {
       try {
-        const discoverySocket = new WebSocket(url);
+        console.log(`Received message`);
+        const data = JSON.parse(event.data);
+        console.log(data.status);
 
-        discoverySocket.onopen = () => {
-          discoverySocket.send(JSON.stringify({ token }));
-        };
-
-        discoverySocket.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.success) {
-              console.log("Discovered Ophelia on", url);
-              resolved = true;
-              discoverySocket.close();
-              resolve(iface.ip);
-            } else {
-              discoverySocket.close();
-              resolve(null);
-            }
-          } catch {
-            discoverySocket.close();
-            resolve(null);
-          }
-        };
-
-        discoverySocket.onerror = (err) => {
-          console.log(
-            `Failed to discover Ophelia on ${url}: ${err.message || err}`,
-          );
-          if (!resolved) resolve(null);
-        };
-
-        discoverySocket.onclose = () => {
-          if (!resolved) resolve(null);
-        };
-      } catch (err) {
-        console.log(`Exception connecting to ${url}: ${err.message}`);
+        if (data.status) {
+          console.log("Discovered Ophelia on", url);
+          discoverySocket.close();
+          resolve(iface.ip);
+        } else {
+          discoverySocket.close();
+          resolve(null);
+        }
+      } catch {
+        discoverySocket.close();
         resolve(null);
       }
-    });
+    };
+
+    discoverySocket.onerror = (err) => {
+      console.log(`Failed to discover Ophelia on ${url}: ${err}`);
+      console.log(err);
+      discoverySocket.close();
+      resolve(null);
+    };
+  });
+}
+
+async function discoverWS(interfaces, port, token) {
+  const promises = interfaces.map(async (iface) => {
+    return discoverOne(iface, port, token);
   });
 
   const results = await Promise.all(promises);
@@ -126,6 +132,7 @@ function send(message) {
     connect();
     return;
   }
+  console.log(`Sending message: ${message}`);
   ws.send(message);
 }
 
@@ -202,6 +209,23 @@ Emitter.subscribe("OPR:RequestResponse", (plugin, data) =>
   send(requestResponse(plugin, data)),
 );
 Emitter.subscribe("OPR:Refresh", () => connect());
+Emitter.subscribe("OPR:FoundInterface", (found) => {
+  console.log("Attempting interface:", found);
+  console.log("Discovering Ophelia on", found.ip);
+  console.log("Port:", found.port);
+  console.log("Token:", found.token);
+
+  // connect(`ws://${found.ip}:${found.port}`);
+
+  discoverOne({ ip: found.ip }, found.port, found.token).then((ip) => {
+    if (ip) {
+      console.log("Good");
+      // Emitter.setState("OPR:FoundInterface", [`ws://${ip}:${found.port}`]);
+    } else {
+      console.log("No usable interfaces found");
+    }
+  });
+});
 Emitter.subscribe("OPR:QRCodeScanned", (data) => {
   console.log("Processing scanned QR code data:", data);
   const interfaces = data.interfaces;
@@ -211,10 +235,9 @@ Emitter.subscribe("OPR:QRCodeScanned", (data) => {
 
   console.log("Filtered interfaces:", candidates);
 
-  discover(candidates, data.port, data.token).then((ip) => {
+  discoverWS(candidates, data.port, data.token).then((ip) => {
     if (ip) {
-      host = `ws://${ip}:${data.port}`;
-      connect();
+      Emitter.setState("OPR:FoundInterface", [`ws://${ip}:${data.port}`]);
     } else {
       console.log("No usable interfaces found");
     }
