@@ -8,7 +8,7 @@ import InterfaceDiscoveryComponent from "./interfaceDiscoveryComponent";
 
 const TopBarComponent = ({ styles }) => {
   const [isPhone, setIsPhone] = React.useState(
-    Dimensions.get("window").width < 600
+    Dimensions.get("window").width < 600,
   );
 
   const [serverStatus, setServerStatus] = React.useState(false);
@@ -149,7 +149,6 @@ const TopBarComponent = ({ styles }) => {
         icon={serverStatusSVG}
         text={serverStatusText}
         onPress={() => {
-          console.log("Hello");
           Emitter.setStateList("OPR:NewMenu", [
             <InterfaceDiscoveryComponent />,
           ]);

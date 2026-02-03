@@ -125,15 +125,17 @@ const InterfaceDiscoveryComponent = () => {
   const [usingCamera, setUsingCamera] = React.useState(false);
   const [scanned, setScanned] = React.useState("");
 
+  React.useEffect((Emitter) => {
+    Emitter.subscribe("OPR:Online", (data) => {
+      setConnected(data);
+    });
+  }, []);
+
   React.useEffect(() => {
     Emitter.subscribe("OPR:QRCodeScanned", (data) => {
       setScanned(data);
     });
   }, []);
-
-  function _connect() {
-    console.log("TODO");
-  }
 
   const depreciated_methods = () => {
     /**
@@ -214,7 +216,7 @@ const InterfaceDiscoveryComponent = () => {
   function connectViaToken() {
     if (!token || !ip || !port) return alert("Please fill out all fields");
 
-    Emitter.setState("OPR:FoundInterface", [
+    Emitter.setState("OPR:DirectlyInputtedInterface", [
       {
         ip: ip,
         port: port,

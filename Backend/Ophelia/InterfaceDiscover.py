@@ -19,7 +19,7 @@ class InterfaceDiscover:
         self.state = self.states[0]
         self.HybridCrypt = OperaCryptography.HybridCryptoEngine()
         self.bound = False
-        self.discovered_peer: tuple[str, int] = None # type: ignore
+        self.discovered_peer: dict[str, str] = None # type: ignore
         self._discovery_done = threading.Event()
 
 
@@ -28,7 +28,6 @@ class InterfaceDiscover:
         self.state = self.states[1]
         self.one_time_token = secrets.token_urlsafe(32)
         encrypted_token = self.HybridCrypt.encrypt(self.one_time_token.encode('utf-8'))
-        print(f"One-time token: {self.one_time_token} | Encrypted token: {encrypted_token}") # TODO: Remove printing sensitive info after testing
         string_token = base64.urlsafe_b64encode(encrypted_token).decode("ascii")
 
         pairing_data = self.generate_pairing_data(string_token, flatten=True)
@@ -100,20 +99,23 @@ print("="*40 + "\\n")
 
 qr.print_ascii(invert=True)
 
-print("\\n" + "="*40)
+print("\\n" + "For direct input")
+print("="*40)
+print("Instructions:\\nYou may manually input a chosen interface along with the port and token\\nbelow into the 'Input token and address' function in the UI.")
+print("="*40)
 index = 1
 for iface in {repr(pairing_data['interfaces'])}:
     print(f"[{{index}}] {{iface['name']}}: {{iface['ip']}}")
     index += 1
 print("="*40)
-
-print(f"Data: {{data}}")
+print("Port: " + {repr(str(pairing_data['port']))})
+print("Token: " + {repr(str(pairing_data['token']))})
 
 print("\\nYou may now close this window...")
 while True:
     input("")
 '''
-     
+
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
             f.write(qr_script)
@@ -162,10 +164,11 @@ while True:
     async def _listen(self, iface, stop_event):
         async def handler(ws):
             try:
+                if self._discovery_done.is_set():
+                    return
                 self.state = self.states[2]
                 message = await asyncio.wait_for(ws.recv(), timeout=10)
                 token = json.loads(message)['token']
-                print(f"Received message: {token}")
                 cipher_bytes = base64.urlsafe_b64decode(token)
                 decrypted = self.HybridCrypt.decrypt(cipher_bytes).decode("utf-8")
             except Exception as e:
@@ -185,7 +188,7 @@ while True:
                 self.found_device_callback((iface['interface'], iface['port']))
                 self.state = self.states[3]
             else:
-                print(f"Connection failed with client: {iface['interface']}:{iface['port']}")
+                print(f"{iface['interface']}:{iface['port']} - Wrong token")
                 await ws.send(json.dumps({'status': False}))
                 await ws.close()
                 self.state = self.states[1]
@@ -256,12 +259,14 @@ while True:
     def found_device_callback(self, device_info):
         self.state = self.states[3]
         print(f"Discovered device: {device_info}")
-        self.discovered_peer = device_info
+        self.discovered_peer = {"IP": device_info[0], "Port": device_info[1]}
 
-    def wait_for_discovery(self, timeout=None) -> tuple:
+    def wait_for_discovery(self, timeout=None) -> dict[str, str]:
         completed = self._discovery_done.wait(timeout)
         if not completed:
             raise TimeoutError("Interface discovery timed out")
+        
+        print(f"Discovered device: {self.discovered_peer}")
         return self.discovered_peer # type: ignore
 
 

@@ -12,9 +12,11 @@ const MAX_DELAY = 30000;
 
 function connect(wHost = null) {
   if (ws && ws.readyState === WebSocket.OPEN) return;
-  if ((attempts) => 5) {
+  console.log("Attempt #", attempts);
+  if (attempts > 5) {
     attempts = 0;
     host = defaultHost;
+    console.log("Reconnecting to default host...");
   }
   if (wHost) host = wHost;
 
@@ -209,7 +211,7 @@ Emitter.subscribe("OPR:RequestResponse", (plugin, data) =>
   send(requestResponse(plugin, data)),
 );
 Emitter.subscribe("OPR:Refresh", () => connect());
-Emitter.subscribe("OPR:FoundInterface", (found) => {
+Emitter.subscribe("OPR:DirectlyInputtedInterface", (found) => {
   console.log("Attempting interface:", found);
   console.log("Discovering Ophelia on", found.ip);
   console.log("Port:", found.port);
@@ -220,7 +222,7 @@ Emitter.subscribe("OPR:FoundInterface", (found) => {
   discoverOne({ ip: found.ip }, found.port, found.token).then((ip) => {
     if (ip) {
       console.log("Good");
-      // Emitter.setState("OPR:FoundInterface", [`ws://${ip}:${found.port}`]);
+      Emitter.setState("OPR:FoundInterface", [`ws://${ip}:6990`]);
     } else {
       console.log("No usable interfaces found");
     }
@@ -237,11 +239,18 @@ Emitter.subscribe("OPR:QRCodeScanned", (data) => {
 
   discoverWS(candidates, data.port, data.token).then((ip) => {
     if (ip) {
-      Emitter.setState("OPR:FoundInterface", [`ws://${ip}:${data.port}`]);
+      console.log("Good");
+      console.log("IP:", ip);
+      Emitter.setState("OPR:FoundInterface", [`ws://${ip}:6990`]);
     } else {
       console.log("No usable interfaces found");
     }
   });
+});
+Emitter.subscribe("OPR:FoundInterface", (found) => {
+  console.log("Waiting 3 seconds to connect...");
+  setTimeout(() => {}, 3000);
+  connect(found);
 });
 
 connect();
