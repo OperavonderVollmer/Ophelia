@@ -12,12 +12,8 @@ Ophelia serves as the central orchestration hub for a modular collection of Pyth
 
 ## Current Status
 
-Active early development (as of December 2025):
-- Backend relocation and initial plugin integration complete.
-- React Native UI ported from Ortlinde repository—basic scaffolding in place.
+Current development milestone (as of February 2025):
+- Refining logic behind connection of frontend and backend
 
-Future milestones:
-- Full plugin registry and dynamic loading.
-- Enhanced UI for plugin configuration and real-time feedback.
-- Integration of existing tools (FileWhisperer, OPR-Speaks, WhisperTranslate, etc.).
-
+Future development milestone:
+- Plugin selection from frontend
