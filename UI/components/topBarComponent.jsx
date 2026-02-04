@@ -15,14 +15,12 @@ const TopBarComponent = ({ styles }) => {
 
   React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:Online", (status) => {
-      console.log("Status: ", status);
       setServerStatus(status);
     });
     return () => unsubscribe();
   }, []);
 
   const serverStatusText = React.useMemo(() => {
-    console.log("Server Status: ", serverStatus);
     if (serverStatus) {
       return "Online";
     } else {
@@ -149,6 +147,7 @@ const TopBarComponent = ({ styles }) => {
         icon={serverStatusSVG}
         text={serverStatusText}
         onPress={() => {
+          console.log("Opening menu...");
           Emitter.setStateList("OPR:NewMenu", [
             <InterfaceDiscoveryComponent />,
           ]);

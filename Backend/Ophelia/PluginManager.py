@@ -10,10 +10,11 @@ from PluginTemplate.PluginTemplate import ophelia_plugin
 
 
 class PluginManager():
+    user = "OperavonderVollmer"
     def __init__(self, verbose=False, user="", on_start:bool=True, skip_update=False):
         load_dotenv()
         self.env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-        if not os.path.exists(self.env_path):
+        if not os.path.exists(self.env_path) and user != "":
             set_key(self.env_path, "GITHUB_USER", user or os.getenv("GITHUB_USER", "OperavonderVollmer"))
         self.verbose = verbose
         self.plugin_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
@@ -47,12 +48,10 @@ class PluginManager():
             opr.error_pretty(exc=e, name="Ophelia - PluginManager", message="Failed to retrieve GitHub repositories.")
             return []
 
-
         plugins = [
             r for r in repos
             if "opr-oph-plugin" in [t.lower() for t in r.get("topics", [])]
-        ]    
-
+        ]  
 
         return plugins
 

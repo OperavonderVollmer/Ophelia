@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -114,26 +114,13 @@ const InterfaceDiscoveryComponent = () => {
   const [connected, setConnected] = React.useState(false);
   const [selectedMenu, setSelectedMenu] = React.useState(0); // 0 = none, 1 = Connect via localhost, 2 = Connect via QR code, 3 = Direct input of token and address
 
-  //TODO
-  const [token, setToken] = React.useState(
-    "AAABAD4DH_Q9eWVeffILamu19WG1Np9VG4y72EtZrIaOtaOhzROd0PCeI8SILkJgSmif4KjnAjfXXCc9krGfv19kt8fjfMgtZQJfXm1Nl1aJfeD1HShrAttlXsunWHmUYZJJ0kUEM-SLL9RngLrjbPIIpGNh7rTIwDFT2EEcPDrrPP-zqYUk5UZxKNbBm8C1fqsyrLrJWLEdCImbLYagwOM4QsGubTR--iL4jVQqhG_Pptwfj9cTxace4CoznADCgh-SYB3-YzORiVn2Fw7aynGFuPfxqygNBD3d_nYmrgyuypNVhYSqh5ug_8UNpGRgAPt-YFwLyVADE6-XrNxRbpfETcNnQUFBQUFCcGYwOHFVTE1ldnA2ZVRYbl8yaFkxLVN1YVcxUkJHbFhmbjVuaFZhcFA0d213a1AyV3laeVNfcmtlYzAzTzR0LVdrVWFTYVZPT2JubjY3N1ltQkJlUDRzZ1U5ZnFyMlZiYTNEUURnUnI3MTV5WEw4Rlk0bG5VaGc5c0kwYUtxcjJ6STZMRw==",
-  );
-  const [ip, setIp] = React.useState("10.147.19.1");
-  const [port, setPort] = React.useState("8080");
+  const [token, setToken] = React.useState("");
+  const [ip, setIp] = React.useState("");
+  const [port, setPort] = React.useState("");
 
-  const [permission, requestPermission] = useCameraPermissions();
-  const [usingCamera, setUsingCamera] = React.useState(false);
-  const [scanned, setScanned] = React.useState("");
-
-  React.useEffect((Emitter) => {
+  React.useEffect((data) => {
     Emitter.subscribe("OPR:Online", (data) => {
       setConnected(data);
-    });
-  }, []);
-
-  React.useEffect(() => {
-    Emitter.subscribe("OPR:QRCodeScanned", (data) => {
-      setScanned(data);
     });
   }, []);
 
@@ -210,8 +197,6 @@ const InterfaceDiscoveryComponent = () => {
       const final = readQRCode(base64);
     }
   };
-
-  async function scanQRCodeWithCamera() {}
 
   function connectViaToken() {
     if (!token || !ip || !port) return alert("Please fill out all fields");
@@ -549,8 +534,8 @@ const InterfaceDiscoveryComponent = () => {
             onPress={() => {
               if (selectedMenu === 3) setSelectedMenu(0);
               else setSelectedMenu(3);
-              // setToken("");
-              // setIp(""); TODO
+              setToken("");
+              setIp("");
             }}
             index={3}
             selectedMenu={selectedMenu}

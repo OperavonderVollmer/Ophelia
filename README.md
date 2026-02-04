@@ -1,5 +1,7 @@
 # Ophelia Suite
 
+As of February 2026, development on Ophelia is **on hold** in order to increase the number of usable Plugins.
+
 **Unified Automation Framework**
 
 Ophelia serves as the central orchestration hub for a modular collection of Python-based automation tools. It enforces a strict plugin architecture (via PluginTemplate standards) to integrate standalone utilities—such as metadata extraction, text-to-speech, translation, and screen monitoring—into a cohesive system. A React Native frontend provides user-friendly access while preserving independent plugin execution.
@@ -13,7 +15,9 @@ Ophelia serves as the central orchestration hub for a modular collection of Pyth
 ## Current Status
 
 Current development milestone (as of February 2025):
+
 - Refining logic behind connection of frontend and backend
 
 Future development milestone:
+
 - Plugin selection from frontend

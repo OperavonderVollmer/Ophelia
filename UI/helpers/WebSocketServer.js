@@ -2,7 +2,7 @@ import Emitter from "./Emitter";
 
 const defaultHost = "ws://127.0.0.1:6990";
 
-let host = defaultHost; // TODO: Change default host later
+let host = defaultHost;
 
 let ws = null;
 let reconnectTimer = null;

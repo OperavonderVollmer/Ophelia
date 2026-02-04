@@ -9,13 +9,15 @@ if root not in sys.path:
 import threading
 import datetime
 import requests
+from PluginManager import PluginManager as PM
 
 class SocketServer:
 
-    def __init__(self, host, port, api_url, run_local: bool = True):
+    def __init__(self, host, port, api_url, pm: PM, run_local: bool = True):
         self.host = host
         self.port = port
         self.api_url = api_url
+        self.plugin_manager: PM = pm
         self.server = None
         self._running = False
         self._server_thread = None
@@ -97,13 +99,18 @@ class SocketServer:
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_INPUT_SCHEME", data.get("requestId"), response)))
                     case "REQUEST_RESPONSE":
                         result = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_RESPONSE", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"), payload=data.get("payload").get("data"))
-
-
                         response = {"status": "success", "message": "Response sent successfully.", "data": {
                             "type": "RESPONSE",
                             "data": result
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_RESPONSE", data.get("requestId"), response)))
+                    case "REQUEST_REPO":
+                        result = self.plugin_manager.look_for_plugins(PM.user)
+                        response = {"status": "success", "message": "Response sent successfully.", "data": {
+                            "type": "RESPONSE",
+                            "data": result
+                        }}
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_REPO", data.get("requestId"), response)))
         except websockets.ConnectionClosed:
             pass
 
