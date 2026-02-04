@@ -1,6 +1,9 @@
 # Ophelia Suite
 
-As of February 2026, development on Ophelia is **on hold** in order to increase the number of usable Plugins.
+⚠️ **Project Status: Temporarily Paused (Not Cancelled)**
+
+As of February 2026, active development on Ophelia is **intentionally paused** to focus on expanding and stabilizing the ecosystem of usable Plugins. This pause is strategic and deliberate—**the project is neither abandoned nor in limbo**. Core architecture decisions are considered stable, and development is expected to resume once sufficient plugin maturity is reached.
+
 
 **Unified Automation Framework**
 
@@ -15,9 +18,7 @@ Ophelia serves as the central orchestration hub for a modular collection of Pyth
 ## Current Status
 
 Current development milestone (as of February 2025):
-
 - Refining logic behind connection of frontend and backend
 
 Future development milestone:
-
 - Plugin selection from frontend
