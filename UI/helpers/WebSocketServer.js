@@ -43,11 +43,15 @@ function connect(wHost = null) {
         break;
 
       case "REQUEST_INPUT_SCHEME":
-        Emitter.setStateList("OPR:NewPopup", data.payload.data);
+        Emitter.setStateList("OPR:NewPopup", [data.payload.data, true]);
         break;
 
       case "REQUEST_RESPONSE":
-        Emitter.setStateList("OPR:NewPopup", data.payload.data);
+        Emitter.setStateList("OPR:NewPopup", [data.payload.data, true]);
+        break;
+
+      case "REQUEST_REPO":
+        Emitter.setStateList("OPR:UpdateRepo", data.payload.data);
         break;
     }
   };
@@ -203,6 +207,10 @@ function requestResponse(plugin, data) {
   });
 }
 
+function requestRepo() {
+  return messageScheme(1, "REQUEST", "REQUEST_REPO", generateRequestId(), {});
+}
+
 Emitter.subscribe("OPR:RequestPlugins", () => send(requestPlugins()));
 Emitter.subscribe("OPR:RequestInputScheme", (plugin) =>
   send(requestInputScheme(plugin)),
@@ -210,6 +218,9 @@ Emitter.subscribe("OPR:RequestInputScheme", (plugin) =>
 Emitter.subscribe("OPR:RequestResponse", (plugin, data) =>
   send(requestResponse(plugin, data)),
 );
+Emitter.subscribe("OPR:RequestRepo", () => {
+  send(requestRepo());
+});
 Emitter.subscribe("OPR:Refresh", () => connect());
 Emitter.subscribe("OPR:DirectlyInputtedInterface", (found) => {
   console.log("Attempting interface:", found);

@@ -105,7 +105,8 @@ class SocketServer:
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_RESPONSE", data.get("requestId"), response)))
                     case "REQUEST_REPO":
-                        result = self.plugin_manager.look_for_plugins(PM.user)
+                        result = self.plugin_manager.look_for_plugins(PM.user, only_essential=True)
+                        print("Received: ", len(result))
                         response = {"status": "success", "message": "Response sent successfully.", "data": {
                             "type": "RESPONSE",
                             "data": result

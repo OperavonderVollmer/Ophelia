@@ -26,13 +26,19 @@ const Home = () => {
   const [popup, setPopup] = React.useState(null);
   const [usingCamera, setUsingCamera] = React.useState(false);
 
-  const handleNewPopup = React.useCallback((payload) => {
-    console.log(`New popup: ${JSON.stringify(payload)}`);
-    const p = <DSLHelper payload={payload} />;
+  const handleNewPopup = React.useCallback((arr) => {
+    let p = null;
+    console.log("Arr:", arr);
+    if (arr[1]) {
+      console.log(`New popup: ${JSON.stringify(arr[0])}`);
+      p = <DSLHelper payload={arr[0]} />;
+    } else {
+      console.log(arr[0] + " - " + arr[1]);
+      p = arr[0];
+    }
     console.log(p);
     setPopup(p);
   }, []);
-
 
   React.useEffect(() => {
     const unsubscribe = Emitter.subscribe("OPR:NewPopup", handleNewPopup);

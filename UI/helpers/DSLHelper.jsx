@@ -306,21 +306,21 @@ export function textBoxHelper(node, classStyle, setValueForId) {
 
 export function selectHelper(node, classStyle, setValueForId) {
   const options = node.props?.options || [];
-
+  
   React.useEffect(() => {
     setValueForId(node.id, options[0]);
   }, []);
 
   return (
     <View key={node.id} style={{ marginBottom: 10 }}>
-      {node.props?.label ? (
+      {node.props?.label ?? (
         <Text style={[styles.inputLabel, styles.whiteText]}>
           {node.props.label}
         </Text>
-      ) : null}
+      )}
       <View style={styles.inputFieldDefaults}>
         <Picker
-          defaultValue={options[0]}
+          defaultValue={options[0]} 
           style={[styles.selectDefault, classStyle]}
           onValueChange={(value) => setValueForId(node.id, value)}
           placeholder={node.hint}

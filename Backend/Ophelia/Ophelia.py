@@ -9,7 +9,7 @@ import PluginManager
 import InterfaceDiscover
 
 VERSION = 1
-interfaceDiscoverFlag = True
+interfaceDiscoverFlag = False
 streamline = True
 def main():
     
@@ -26,7 +26,7 @@ def main():
         peer = ID.wait_for_discovery()
         print("Discovered interface:", peer["IP"], peer["Port"])
         CA = CallableAPI.CallableAPI(PluginManager=PM, host=peer["IP"], port=6980, version=VERSION)
-        SS = SocketServer.SocketServer(peer["IP"], 6990, api_url=CA.api_url(), pm=PM, run_local=False) # TODO: Remove run_local
+        SS = SocketServer.SocketServer(peer["IP"], 6990, api_url=CA.api_url(), pm=PM, run_local=True) # TODO: Remove run_local
 
     else:        
         CA = CallableAPI.CallableAPI(PluginManager=PM, host="127.0.0.1", port=6980, version=VERSION)

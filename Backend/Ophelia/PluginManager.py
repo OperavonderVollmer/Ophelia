@@ -40,7 +40,7 @@ class PluginManager():
         self.update_plugin_list()
 
     @staticmethod
-    def look_for_plugins(user) -> list: # OperavonderVollmer
+    def look_for_plugins(user, only_essential=False) -> list: # OperavonderVollmer
         url = f"https://api.github.com/users/{user}/repos"
         try:
             repos = requests.get(url).json()
@@ -52,6 +52,22 @@ class PluginManager():
             r for r in repos
             if "opr-oph-plugin" in [t.lower() for t in r.get("topics", [])]
         ]  
+
+        for p in plugins:
+            opr.print_from(name="Ophelia - PluginManager", message=f"{p['name']} Found!")
+
+        if only_essential:
+            essentials = []
+
+            for p in plugins:
+                essentials.append({
+                    "name": p['name'],
+                    "pushed_at": p['pushed_at'],
+                    "description": p['description'],
+                    "topics": p['topics']
+                })
+
+            return essentials
 
         return plugins
 

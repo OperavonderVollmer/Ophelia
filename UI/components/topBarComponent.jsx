@@ -5,6 +5,7 @@ import { Dimensions } from "react-native";
 import Emitter from "../helpers/Emitter";
 import ButtonWithIconComponent from "./sub-components/buttonWithIconComponent";
 import InterfaceDiscoveryComponent from "./interfaceDiscoveryComponent";
+import NewPluginComponent from "./newPluginComponent";
 
 const TopBarComponent = ({ styles }) => {
   const [isPhone, setIsPhone] = React.useState(
@@ -111,7 +112,7 @@ const TopBarComponent = ({ styles }) => {
           Emitter.publish("OPR:RequestPlugins");
         }}
       />
-      {/* <ButtonWithIconComponent
+      <ButtonWithIconComponent
         styles={styles}
         icon={
           <Svg width={20} height={20} viewBox="0 0 16 16" fill="none">
@@ -123,7 +124,7 @@ const TopBarComponent = ({ styles }) => {
         }
         text="Plugins"
         onPress={() => {
-          Emitter.publish("OPR:Refresh");
+          Emitter.publishList("OPR:NewPopup", [<NewPluginComponent />, false]);
         }}
       />
       <ButtonWithIconComponent
@@ -141,7 +142,7 @@ const TopBarComponent = ({ styles }) => {
         onPress={() => {
           Emitter.publish("OPR:OpenHelp");
         }}
-      /> */}
+      />
       <ButtonWithIconComponent
         styles={styles}
         icon={serverStatusSVG}
