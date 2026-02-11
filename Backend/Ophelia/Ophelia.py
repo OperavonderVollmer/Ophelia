@@ -10,11 +10,11 @@ import InterfaceDiscover
 
 VERSION = 1
 interfaceDiscoverFlag = False
-streamline = True
+skip_update_plugins = True
 def main():
     
     opr.print_from(name="Ophelia", message="Welcome to Ophelia!")
-    PM = PluginManager.PluginManager(on_start=True, skip_update=streamline)
+    PM = PluginManager.PluginManager(on_start=True, skip_update=skip_update_plugins)
 
     if interfaceDiscoverFlag:
 

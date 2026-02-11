@@ -120,10 +120,39 @@ const styles = StyleSheet.create({
 
 export function DSLHelper({ payload }) {
   const [values, setValues] = React.useState({});
+  const effects = payload.data[0].effects ?? [];
+  const presets = payload.data[0].presets ?? {};
 
   function setValueForId(id, value) {
     setValues((prev) => ({ ...prev, [id]: value }));
   }
+
+  React.useEffect(() => {
+    if (!effects || !presets) return;
+
+    for (const triggerId in effects) {
+      const effectType = effects[triggerId];
+
+      if (effectType !== "applyPreset") continue;
+
+      const selectedValue = values[triggerId];
+      if (!selectedValue) continue;
+
+      const preset = presets[selectedValue];
+      if (!preset) continue;
+
+      for (const targetId in preset) {
+        const nextValue = preset[targetId];
+
+        if (values[targetId] !== nextValue) {
+          setValues((prev) => ({
+            ...prev,
+            [targetId]: nextValue,
+          }));
+        }
+      }
+    }
+  }, [values]);
 
   function exportValues() {
     //{"version":1,"type":"REQUEST","action":"REQUEST_INPUT_SCHEME","requestId":"ygpc0y7","payload":{"plugin":"ScreenMonitor"}}
@@ -146,9 +175,9 @@ export function DSLHelper({ payload }) {
       case "div":
         return divHelper(node, classStyle, renderNode);
       case "input":
-        return textBoxHelper(node, classStyle, setValueForId);
+        return textBoxHelper(node, classStyle, values, setValueForId);
       case "select":
-        return selectHelper(node, classStyle, setValueForId);
+        return selectHelper(node, classStyle, values, setValueForId);
       case "label":
         return labelHelper(node, classStyle);
       case "h1":
@@ -280,13 +309,19 @@ export function divHelper(node, classStyle, renderNode) {
       {node.title ? <Text style={styles.divTitle}>{node.title}</Text> : null}
 
       {(node.children || []).map((child) =>
-        React.cloneElement(renderNode(child), { key: child.id })
+        React.cloneElement(renderNode(child), { key: child.id }),
       )}
     </View>
   );
 }
 
-export function textBoxHelper(node, classStyle, setValueForId) {
+export function textBoxHelper(node, classStyle, values, setValueForId) {
+  React.useEffect(() => {
+    if (values[node.id] == null) {
+      setValueForId(node.id, "");
+    }
+  });
+
   return (
     <View key={node.id} style={{}}>
       {node.label ? (
@@ -296,7 +331,9 @@ export function textBoxHelper(node, classStyle, setValueForId) {
       <View style={styles.inputFieldDefaults}>
         <TextInput
           style={[styles.inputDefault, classStyle]}
+          type={node?.type || "text"}
           placeholder={node.hint}
+          value={values[node.id] || ""}
           onChangeText={(text) => setValueForId(node.id, text)}
         />
       </View>
@@ -304,23 +341,25 @@ export function textBoxHelper(node, classStyle, setValueForId) {
   );
 }
 
-export function selectHelper(node, classStyle, setValueForId) {
+export function selectHelper(node, classStyle, values, setValueForId) {
   const options = node.props?.options || [];
-  
+
   React.useEffect(() => {
-    setValueForId(node.id, options[0]);
-  }, []);
+    if (values[node.id] == null) {
+      setValueForId(node.id, options[0]);
+    }
+  }, [node.id, options.join("|")]);
 
   return (
     <View key={node.id} style={{ marginBottom: 10 }}>
-      {node.props?.label ?? (
+      {node.props?.label ? (
         <Text style={[styles.inputLabel, styles.whiteText]}>
           {node.props.label}
         </Text>
-      )}
+      ) : null}
       <View style={styles.inputFieldDefaults}>
         <Picker
-          defaultValue={options[0]} 
+          // defaultValue={options[0]}
           style={[styles.selectDefault, classStyle]}
           onValueChange={(value) => setValueForId(node.id, value)}
           placeholder={node.hint}
@@ -339,7 +378,7 @@ export function labelHelper(node, classStyle) {
   return (
     <View key={node.id} style={{}}>
       {node.props?.text ? (
-        <Text style={[styles.labelDefault, classStyle]}>
+        <Text style={[styles.labelDefault, styles.whiteText, classStyle]}>
           {node.props?.text}
         </Text>
       ) : null}

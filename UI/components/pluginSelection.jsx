@@ -13,7 +13,7 @@ const PluginSelection = () => {
       console.log(`Received plugins: ${JSON.stringify(payload)}`);
 
       if (payload[0].length !== 0) {
-        setPlugins(payload);
+        setPlugins(payload[0]);
       } else {
         setPlugins([]);
       }
@@ -69,7 +69,7 @@ const PluginSelection = () => {
                 key={plugin}
                 style={styles.basicButtonInner}
                 onPress={() =>
-                  Emitter.publish("OPR:RequestInputScheme", plugin)
+                  Emitter.publish("OPR:RequestInputScheme", [plugin])
                 }
               >
                 <Text style={styles.basicButtonText}>{plugin}</Text>
