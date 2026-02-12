@@ -359,10 +359,10 @@ export function selectHelper(node, classStyle, values, setValueForId) {
       ) : null}
       <View style={styles.inputFieldDefaults}>
         <Picker
-          // defaultValue={options[0]}
           style={[styles.selectDefault, classStyle]}
           onValueChange={(value) => setValueForId(node.id, value)}
           placeholder={node.hint}
+          selectedValue={values[node.id]}
         >
           {options.map((opt) => (
             <Picker.Item key={opt} label={opt} value={opt} />
