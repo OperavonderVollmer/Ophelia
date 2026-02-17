@@ -68,6 +68,13 @@ const styles = StyleSheet.create({
   },
   italic: { fontStyle: "italic" },
   inputFieldDefaults: { paddingLeft: 20 },
+  inputDefault: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 10,
+    borderRadius: 5,
+    color: "white",
+  },
+  placeholderColor: { color: "rgba(255, 255, 255, 0.5)" },
   noInputFieldDefaults: { paddingLeft: 0 },
   divDefault: {
     gap: 10,
@@ -127,32 +134,53 @@ export function DSLHelper({ payload }) {
     setValues((prev) => ({ ...prev, [id]: value }));
   }
 
-  React.useEffect(() => {
-    if (!effects || !presets) return;
+  // React.useEffect(() => { Commented for now, might revisit if new useEffect proves ineffective
+  //   if (!effects || !presets) return;
 
-    for (const triggerId in effects) {
-      const effectType = effects[triggerId];
+  //   for (const triggerId in effects) {
+  //     const effectType = effects[triggerId];
 
-      if (effectType !== "applyPreset") continue;
+  //     if (effectType !== "applyPreset") continue;
 
-      const selectedValue = values[triggerId];
-      if (!selectedValue) continue;
+  //     const selectedValue = values[triggerId];
+  //     if (!selectedValue) continue;
 
-      const preset = presets[selectedValue];
-      if (!preset) continue;
+  //     const preset = presets[selectedValue];
+  //     if (!preset) continue;
 
-      for (const targetId in preset) {
-        const nextValue = preset[targetId];
+  //     for (const targetId in preset) {
+  //       const nextValue = preset[targetId];
 
-        if (values[targetId] !== nextValue) {
-          setValues((prev) => ({
-            ...prev,
-            [targetId]: nextValue,
-          }));
-        }
-      }
+  //       if (values[targetId] !== nextValue) {
+  //         setValues((prev) => ({
+  //           ...prev,
+  //           [targetId]: nextValue,
+  //         }));
+  //       }
+  //     }
+  //   }
+  // }, [values]);
+
+  const presetTriggerId = React.useMemo(() => {
+    if (!effects) return null;
+    for (const k in effects) {
+      if (effects[k] === "applyPreset") return k;
     }
-  }, [values]);
+    return null;
+  }, [effects]);
+
+  React.useEffect(() => {
+    if (!presetTriggerId) return;
+
+    const selectedPresetLabel = values[presetTriggerId];
+    if (!selectedPresetLabel) return;
+
+    const preset = presets?.[selectedPresetLabel];
+    if (!preset) return;
+
+    // Apply the whole preset in ONE update
+    setValues((prev) => ({ ...prev, ...preset }));
+  }, [presetTriggerId, values[presetTriggerId]]);
 
   function exportValues() {
     //{"version":1,"type":"REQUEST","action":"REQUEST_INPUT_SCHEME","requestId":"ygpc0y7","payload":{"plugin":"ScreenMonitor"}}
@@ -162,7 +190,7 @@ export function DSLHelper({ payload }) {
 
   function renderNode(node) {
     if (!node || !node.type) return null;
-    console.log(`Divining node: ${JSON.stringify(node)}`);
+    // console.log(`Divining node: ${JSON.stringify(node)}`);
 
     const classStyle = node.classes
       ? node.classes
@@ -316,25 +344,38 @@ export function divHelper(node, classStyle, renderNode) {
 }
 
 export function textBoxHelper(node, classStyle, values, setValueForId) {
+  const kbd = node.props?.input_type || "default";
+  const isNumeric = ["number-pad", "numeric", "decimal-pad"].includes(kbd);
+
   React.useEffect(() => {
     if (values[node.id] == null) {
       setValueForId(node.id, "");
     }
-  });
+  }, [node.id]);
 
   return (
     <View key={node.id} style={{}}>
-      {node.label ? (
-        <Text style={[styles.inputLabel, styles.whiteText]}>{node.label}</Text>
+      {node.props?.label ? (
+        <Text style={[styles.inputLabel, styles.whiteText]}>
+          {node.props?.label}
+        </Text>
       ) : null}
-
       <View style={styles.inputFieldDefaults}>
         <TextInput
           style={[styles.inputDefault, classStyle]}
-          type={node?.type || "text"}
-          placeholder={node.hint}
+          keyboardType={node.props?.input_type || "default"}
+          placeholder={node.props?.hint}
+          placeholderTextColor={styles.placeholderColor.color}
           value={values[node.id] || ""}
-          onChangeText={(text) => setValueForId(node.id, text)}
+          onChangeText={(text) => {
+            let next = text;
+
+            if (isNumeric) {
+              next = next.replace(/[^0-9]/g, "");
+            }
+
+            setValueForId(node.id, next);
+          }}
         />
       </View>
     </View>
