@@ -134,32 +134,6 @@ export function DSLHelper({ payload }) {
     setValues((prev) => ({ ...prev, [id]: value }));
   }
 
-  // React.useEffect(() => { Commented for now, might revisit if new useEffect proves ineffective
-  //   if (!effects || !presets) return;
-
-  //   for (const triggerId in effects) {
-  //     const effectType = effects[triggerId];
-
-  //     if (effectType !== "applyPreset") continue;
-
-  //     const selectedValue = values[triggerId];
-  //     if (!selectedValue) continue;
-
-  //     const preset = presets[selectedValue];
-  //     if (!preset) continue;
-
-  //     for (const targetId in preset) {
-  //       const nextValue = preset[targetId];
-
-  //       if (values[targetId] !== nextValue) {
-  //         setValues((prev) => ({
-  //           ...prev,
-  //           [targetId]: nextValue,
-  //         }));
-  //       }
-  //     }
-  //   }
-  // }, [values]);
 
   const presetTriggerId = React.useMemo(() => {
     if (!effects) return null;
