@@ -463,7 +463,7 @@ const InterfaceDiscoveryComponent = () => {
       >
         <Text style={{ color: "white" }}>Close</Text>
       </TouchableOpacity>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={{
           position: "absolute",
           top: 10,
@@ -479,7 +479,7 @@ const InterfaceDiscoveryComponent = () => {
         }}
       >
         <Text style={{ color: "white" }}>DEBUG: Fake Connection</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <Text
         style={{
           position: "absolute",
