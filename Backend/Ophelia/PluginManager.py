@@ -39,8 +39,7 @@ class PluginManager():
         opr.print_from(name="Ophelia - PluginManager", message=f"[✔] Loaded {len(self.plugins.keys())} plugin(s)")
         self.update_plugin_list()
 
-    @staticmethod
-    def look_for_plugins(user, only_essential=False) -> list: # OperavonderVollmer
+    def look_for_plugins(self, user, only_essential=False, as_cards=False) -> list: # OperavonderVollmer
         url = f"https://api.github.com/users/{user}/repos"
         try:
             repos = requests.get(url).json()
@@ -56,6 +55,10 @@ class PluginManager():
         for p in plugins:
             opr.print_from(name="Ophelia - PluginManager", message=f"{p['name']} Found!")
 
+        if as_cards:            
+            cards = self._plugin_helper(plugins, as_dict=True)
+            return cards
+
         if only_essential:
             essentials = []
 
@@ -67,15 +70,15 @@ class PluginManager():
                     "topics": p['topics']
                 })
 
-            return essentials
+            if not as_cards: return essentials 
 
         return plugins
 
-    def _plugin_helper(self, plugins):
+    def _plugin_helper(self, plugins, as_dict=False) -> list:
         choices = []
         for plugin in plugins:
             last_update = datetime.fromisoformat(plugin['pushed_at'].replace("Z", "+00:00"))
-            now = datetime.now(timezone.utc)  # also aware
+            now = datetime.now(timezone.utc)  
 
             last_update_delta = now - last_update
             days, seconds = last_update_delta.days, last_update_delta.seconds
@@ -85,6 +88,8 @@ class PluginManager():
             last_update_time = f"{f'{days}d ' if days > 0 else ''}{f'{hours}h ' if hours > 0 else ''}{f'{minutes}m ago' if minutes > 0 else 'just now'}"
 
             installed_update_str = self._past.get(plugin['name'])
+
+            print(f"Plugin: {plugin['name']}\nLast update: {last_update}\nInstalled update: {installed_update_str or 'None'}\nNow: {now}")  # Debug print
 
             if installed_update_str:
                 installed_update = datetime.fromisoformat(str(installed_update_str).replace("Z", "+00:00"))
@@ -99,11 +104,25 @@ class PluginManager():
                 hours = seconds // 3600
                 minutes = (seconds % 3600) // 60
                 
-                status = f"UPDATE AVAILABLE (Installed update is outdated by {days}d {hours}h {minutes}m ago)"
+                status = f"UPDATE AVAILABLE (Installed update is outdated by {f'{days}d ' if days > 0 else ''} {f'{hours}h ' if hours > 0 else ''}{f'{minutes}m ' if minutes > 0 else ''})" if minutes > 0 else "UPDATE AVAILABLE (Updated just now)"
             else:
                 status = "FULLY UPDATED"
 
-            choices.append(f"{plugin['name']} - Last update {last_update.date()} ({last_update_time}) - {status}")
+            if not as_dict:
+                choices.append(f"{plugin['name']} - Last update {last_update.date()} ({last_update_time}) - {status}")
+            else:
+               choices.append({
+                "name": plugin["name"],
+                "last_update_iso": plugin["pushed_at"],
+                "last_update_date": last_update.date().isoformat(),
+                "last_update_str": last_update_time,
+                "status": status,
+                "description": plugin.get("description") or "",
+                "topics": plugin.get("topics") or [],
+                "html_url": plugin.get("html_url"),
+                "clone_url": plugin.get("clone_url"),
+                "ssh_url": plugin.get("ssh_url"),
+            })
 
         return choices
 
