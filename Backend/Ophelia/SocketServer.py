@@ -112,6 +112,9 @@ class SocketServer:
                             "data": result
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_REPO", data.get("requestId"), response)))
+                    case "REQUEST_INSTALL":
+                        result = self.plugin_manager.download_plugin(data.get("payload").get("plugin"))
+                        
         except websockets.ConnectionClosed:
             pass
 

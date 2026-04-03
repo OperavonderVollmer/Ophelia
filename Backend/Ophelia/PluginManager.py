@@ -89,7 +89,7 @@ class PluginManager():
 
             installed_update_str = self._past.get(plugin['name'])
 
-            print(f"Plugin: {plugin['name']}\nLast update: {last_update}\nInstalled update: {installed_update_str or 'None'}\nNow: {now}")  # Debug print
+            # print(f"Plugin: {plugin['name']}\nLast update: {last_update}\nInstalled update: {installed_update_str or 'None'}\nNow: {now}")  # Debug print
 
             if installed_update_str:
                 installed_update = datetime.fromisoformat(str(installed_update_str).replace("Z", "+00:00"))
@@ -104,7 +104,7 @@ class PluginManager():
                 hours = seconds // 3600
                 minutes = (seconds % 3600) // 60
                 
-                status = f"UPDATE AVAILABLE (Installed update is outdated by {f'{days}d ' if days > 0 else ''} {f'{hours}h ' if hours > 0 else ''}{f'{minutes}m ' if minutes > 0 else ''})" if minutes > 0 else "UPDATE AVAILABLE (Updated just now)"
+                status = f"UPDATE AVAILABLE (Installed update is outdated by {f'{days}d' if days > 0 else ''}{f'{hours}h' if hours > 0 else ''}{f'{minutes}m' if minutes > 0 else ''})" if minutes > 0 else "UPDATE AVAILABLE (Updated just now)"
             else:
                 status = "FULLY UPDATED"
 
@@ -235,6 +235,20 @@ class PluginManager():
         finally:
             shutil.rmtree(temp_dir)
             opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Cleaned up temp directory: {temp_dir}")
+            self.backup()  # backup after each plugin installation to save the state of installed plugins
+            self.load_plugins()  # reload plugins after installation
+            
+
+    def delete_plugin(self, PLUGIN_NAME):
+        plugin_path = os.path.join(self.plugin_dir, PLUGIN_NAME)
+        if os.path.exists(plugin_path):
+            shutil.rmtree(plugin_path)
+            opr.print_from(name="Ophelia - PluginManager", message=f"[✔] Deleted plugin: {PLUGIN_NAME}")
+            self._past.pop(PLUGIN_NAME, None)  # remove from past plugins
+            self.backup()  # backup after deletion to save the state of installed plugins
+            self.load_plugins()  # reload plugins after deletion
+        else:
+            opr.print_from(name="Ophelia - PluginManager", message=f"[✖] Plugin not found: {PLUGIN_NAME}")
 
 
 

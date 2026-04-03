@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
+  Linking,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { styles } from "../../app/styles";
@@ -77,7 +77,7 @@ export const NewPluginSubComponent = ({ plugin }) => {
         <span style={pluginStyles.span}>Plugin</span> {plugin.name}
       </Text>
       {dropdownOpen && (
-        <View style={{  }}>
+        <View style={{}}>
           <Text style={{ color: "white", textAlign: "justify" }}>
             <span style={pluginStyles.span}>Description</span>{" "}
             {plugin.description}
@@ -141,6 +141,12 @@ export const NewPluginSubComponent = ({ plugin }) => {
           }}
         >
           <Text style={styles.controlButtontext}>Install</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.controlButton, pluginStyles.button]}
+          onPress={() => Linking.openURL(plugin?.html_url)}
+        >
+          <Text style={styles.controlButtontext}>🔗</Text>
         </TouchableOpacity>
       </View>
     </View>
