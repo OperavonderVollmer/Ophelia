@@ -263,6 +263,26 @@ Emitter.subscribe("OPR:FoundInterface", (found) => {
   setTimeout(() => {}, 3000);
   connect(found);
 });
+Emitter.subscribe("OPR:InstallPlugin", (plugin) => {
+  send(
+    messageScheme(1, "REQUEST", "REQUEST_INSTALL_PLUGIN", generateRequestId(), {
+      plugin: plugin.plugin,
+    }),
+  );
+});
+Emitter.subscribe("OPR:UninstallPlugin", (plugin) => {
+  send(
+    messageScheme(
+      1,
+      "REQUEST",
+      "REQUEST_UNINSTALL_PLUGIN",
+      generateRequestId(),
+      {
+        plugin: plugin.plugin,
+      },
+    ),
+  );
+});
 
 connect();
 

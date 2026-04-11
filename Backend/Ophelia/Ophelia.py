@@ -10,7 +10,7 @@ import InterfaceDiscover
 
 VERSION = 1
 interfaceDiscoverFlag = False
-skip_update_plugins = True
+skip_update_plugins = False
 def main():
     
     opr.print_from(name="Ophelia", message="Welcome to Ophelia!")

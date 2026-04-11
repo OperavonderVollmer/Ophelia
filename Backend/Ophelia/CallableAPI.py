@@ -42,6 +42,20 @@ class CallableAPI:
             scheme = self.PluginManager.execute_plugin(PLUGIN_NAME=body.get('plugin', None), payload=body.get('payload', {}))
             print(f"Response for {body.get('plugin', None)}: {scheme}")
             return [scheme]
+        
+        @self.fastapi_app.post("/REQUEST_INSTALL_PLUGIN")
+        def install_plugin(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Installing plugin {body.get('plugin', None)}. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
+            result = self.PluginManager.download_plugin({"name": body.get('plugin', None)})
+            print(f"Install result for {body.get('plugin', None)}: {result}")
+            return {"success": result}
+        
+        @self.fastapi_app.post("/REQUEST_UNINSTALL_PLUGIN")
+        def uninstall_plugin(body: dict):
+            opr.write_log(isFrom="Ophelia - CallableAPI", message=f"Uninstalling plugin {body.get('plugin', None)}. Request ID: {body.get('requestId', 0)}", filename="OpheliaServer.log", level="INFO")
+            result = self.PluginManager.delete_plugin(body.get('plugin', None))
+            print(f"Uninstall result for {body.get('plugin', None)}: {result}")
+            return {"success": result}
 
     def start(self):
         

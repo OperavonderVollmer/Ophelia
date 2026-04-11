@@ -112,8 +112,22 @@ class SocketServer:
                             "data": result
                         }}
                         await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_REPO", data.get("requestId"), response)))
-                    case "REQUEST_INSTALL":
-                        result = self.plugin_manager.download_plugin(data.get("payload").get("plugin"))
+                    case "REQUEST_INSTALL_PLUGIN":
+                        # result = self.plugin_manager.download_plugin(data.get("payload").get("plugin"))
+                        result = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_INSTALL_PLUGIN", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"))
+                        print("Install result: ", result)
+                        response = {"status": result.get("success").get("result", False), "message": "Plugin installation result.", "data": {
+                            "type": "RESPONSE",
+                            "data": result.get("success").get("message", "Installation failed.")
+                        }}  
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_INSTALL_PLUGIN", data.get("requestId"), response)))
+                    case "REQUEST_UNINSTALL_PLUGIN":
+                        result = await asyncio.to_thread(self.contact_api, type="REQUEST", action="REQUEST_UNINSTALL_PLUGIN", requestId=data.get("requestId"), plugin=data.get("payload").get("plugin"))
+                        response = {"status": result.get("success").get("result", False), "message": "Plugin uninstallation result.", "data": {
+                            "type": "RESPONSE",
+                            "data": result.get("success").get("message", "Uninstallation failed.")
+                        }}    
+                        await self.sending(websocket=websocket, message=json.dumps(self.message_scheme(1, "REQUEST", "REQUEST_UNINSTALL_PLUGIN", data.get("requestId"), response)))
                         
         except websockets.ConnectionClosed:
             pass

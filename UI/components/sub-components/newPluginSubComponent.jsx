@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { styles } from "../../app/styles";
+import Emitter from "../../helpers/Emitter";
 
 export const NewPluginSubComponent = ({ plugin }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(true);
@@ -107,10 +108,12 @@ export const NewPluginSubComponent = ({ plugin }) => {
               key={topic}
               style={{
                 color: "white",
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                backgroundColor: "rgba(68, 0, 0, 0.93)",
                 paddingHorizontal: 8,
                 textAlign: "center",
                 borderRadius: 5,
+                // borderColor: "rgba(145, 145, 145, 0.39)",
+                // borderWidth: 2.1,
                 fontSize: 10,
                 paddingVertical: 5,
                 // fontStyle: "italic",
@@ -125,9 +128,9 @@ export const NewPluginSubComponent = ({ plugin }) => {
         <TouchableOpacity
           style={[styles.controlButton, pluginStyles.button]}
           onPress={() => {
-            console.log(
-              `Uninstalling plugin ${plugin.name} from ${plugin.clone_url}`,
-            );
+            Emitter.setStateList("OPR:UninstallPlugin", {
+              plugin: plugin.name,
+            });
           }}
         >
           <Text style={styles.controlButtontext}>Uninstall</Text>
@@ -135,9 +138,7 @@ export const NewPluginSubComponent = ({ plugin }) => {
         <TouchableOpacity
           style={[styles.controlButton, pluginStyles.button]}
           onPress={() => {
-            console.log(
-              `Installing plugin ${plugin.name} from ${plugin.clone_url}`,
-            );
+            Emitter.setStateList("OPR:InstallPlugin", { plugin: plugin.name });
           }}
         >
           <Text style={styles.controlButtontext}>Install</Text>

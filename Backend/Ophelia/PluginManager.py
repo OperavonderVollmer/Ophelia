@@ -165,10 +165,11 @@ class PluginManager():
 
     def get_plugin_list(self): return list(self.plugins.keys())
 
-    def download_plugin(self, plugin) -> bool:
+    def download_plugin(self, PLUGIN_NAME) -> bool:
+        print(f"Starting download of plugin: {PLUGIN_NAME}")  # Debug print
         temp_dir = tempfile.mkdtemp()
-        output = os.path.join(temp_dir, f"{plugin['name']}.zip")
-        zip_url = f"https://api.github.com/repos/{self.user}/{plugin['name']}/zipball/main"
+        output = os.path.join(temp_dir, f"{PLUGIN_NAME['name']}.zip")
+        zip_url = f"https://api.github.com/repos/{self.user}/{PLUGIN_NAME['name']}/zipball/main"
 
         try:
             # STEP 1 — download zip
@@ -179,10 +180,10 @@ class PluginManager():
                 with open(output, "wb") as f:
                     f.write(response.content)
 
-                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Downloaded plugin: {plugin['name']}")
+                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Downloaded plugin: {PLUGIN_NAME['name']}")
 
             except Exception as e:
-                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to download plugin: {plugin['name']}")
+                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to download plugin: {PLUGIN_NAME['name']}")
                 return False
 
             # STEP 2 — extract
@@ -190,10 +191,10 @@ class PluginManager():
                 with zipfile.ZipFile(output, "r") as zip_ref:
                     zip_ref.extractall(temp_dir)
 
-                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Extracted plugin: {plugin['name']}")
+                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Extracted plugin: {PLUGIN_NAME['name']}")
 
             except Exception as e:
-                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to extract plugin: {plugin['name']}")
+                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to extract plugin: {PLUGIN_NAME['name']}")
                 return False
             finally:
                 # remove zip no matter what
@@ -201,19 +202,19 @@ class PluginManager():
 
             # STEP 3 — install
             extracted_root = next(os.scandir(temp_dir)).path
-            inner_plugin = os.path.join(extracted_root, plugin['name'])
+            inner_plugin = os.path.join(extracted_root, PLUGIN_NAME['name'])
             requirements_path = os.path.join(extracted_root, "requirements.txt")
-            dest_path = os.path.join(self.plugin_dir, plugin['name'])
+            dest_path = os.path.join(self.plugin_dir, PLUGIN_NAME['name'])
 
             try:
                 if os.path.exists(dest_path):
                     shutil.rmtree(dest_path)
 
                 shutil.move(inner_plugin, dest_path)
-                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin: {plugin['name']}")
+                opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin: {PLUGIN_NAME['name']}")
 
             except Exception as e:
-                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin: {plugin['name']}")
+                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin: {PLUGIN_NAME['name']}")
                 return False
 
             # STEP 4 — requirements
@@ -221,13 +222,13 @@ class PluginManager():
                 if os.path.exists(requirements_path): # TODO: Remove comments
                     # subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path])
                     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path, "--force-reinstall"])
-                    opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin requirements: {plugin['name']}")
+                    opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Installed plugin requirements: {PLUGIN_NAME['name']}")
             except Exception as e:
-                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin requirements. Please install them manually: {plugin['name']}")
+                opr.error_pretty(exc=e, name="Ophelia - PluginManager - Download Plugin", message=f"[✖] Failed to install plugin requirements. Please install them manually: {PLUGIN_NAME['name']}")
                 return False
 
             # success
-            opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Finished installing {plugin['name']} to {self.plugin_dir}\\{plugin['name']}")
+            opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"[✔] Finished installing {PLUGIN_NAME['name']} to {self.plugin_dir}\\{PLUGIN_NAME['name']}")
             opr.print_from(name="Ophelia - PluginManager - Download Plugin", message=f"New files added to {dest_path}: {', '.join(os.listdir(dest_path))}")
 
             return True
@@ -247,8 +248,11 @@ class PluginManager():
             self._past.pop(PLUGIN_NAME, None)  # remove from past plugins
             self.backup()  # backup after deletion to save the state of installed plugins
             self.load_plugins()  # reload plugins after deletion
+            return {"result": True, "message": f"Plugin '{PLUGIN_NAME}' deleted successfully."}
         else:
-            opr.print_from(name="Ophelia - PluginManager", message=f"[✖] Plugin not found: {PLUGIN_NAME}")
+            message = f"Plugin not found: {PLUGIN_NAME}"
+            opr.print_from(name="Ophelia - PluginManager", message=message)
+            return {"result": False, "message": message}
 
 
 
